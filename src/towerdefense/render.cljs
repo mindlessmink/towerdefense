@@ -23,16 +23,19 @@
 
 (defn- draw-creeps [context state]
   (doseq [creep (:creeps state)]
-    (set! (.-fillStyle context) (creep-color creep))
-    (.beginPath context)
-    (.arc context
-          (+ 8 (:x creep))
-          (+ 8 (:y creep))
-          8
-          0
-          (* 2 PI)
-          true)
-    (.fill context)))
+    (let [size (if (:boss? creep)
+                 12
+                 8)]
+      (set! (.-fillStyle context) (creep-color creep))
+      (.beginPath context)
+      (.arc context
+            (+ 8 (:x creep))
+            (+ 8 (:y creep))
+            size
+            0
+            (* 2 PI)
+            true)
+      (.fill context))))
 
 (defn- draw-game-canvas [state]
   (let [context (get-2d-context "game-canvas")]
@@ -47,7 +50,9 @@
     (.fillRect context 0 0 200 600)
     (set! (.-fillStyle context) "black")
     (set! (.-font context) "16px sans")
-    (.fillText context (str "Frame: " (:frames-rendered state)) 0 20)))
+    (.fillText context (str "Money: $" (:money state)) 0 20)
+    (.fillText context (str "Lives: " (:lives state)) 0 50)
+    (.fillText context (str "Frame: " (:frames-rendered state)) 0 590)))
 
 (defn render-game [state]
   (draw-game-canvas state)

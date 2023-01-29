@@ -44,7 +44,11 @@
                               (frame-callback new-state new-timestamp)))))
 
 (defn new-game []
-  {:frames-rendered 0, :towers [], :creeps []})
+  {:frames-rendered 0
+   :towers []
+   :creeps []
+   :money 100
+   :lives 20})
 
 (defn start-game [timestamp]
   (.requestAnimationFrame js/window (frame-callback (new-game) timestamp)))
