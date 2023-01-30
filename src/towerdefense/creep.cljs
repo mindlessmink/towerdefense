@@ -1,9 +1,16 @@
 (ns towerdefense.creep
-  (:require (cljs.math :refer (ceil pow round))))
+  (:require (cljs.math :refer [ceil
+                               pow
+                               round])
+            (towerdefense.field :refer [Target
+                                        blocked?
+                                        find-path
+                                        in-target?
+                                        pixel->tile])))
 
-(defrecord Creep [creep-type health max-health value boss? x y id])
+(defrecord Creep [creep-type health max-health value boss? coords target id])
 
-(defn make-creep [creep-type wave x y]
+(defn make-creep [creep-type wave coords target]
   (let [health (round (* 10 (pow 1.1 wave)))
         value (ceil (/ wave 8))]
     (Creep. creep-type
@@ -11,8 +18,8 @@
             health
             value
             (zero? (mod wave 8))
-            x
-            y
+            coords
+            target
             (gensym (str (name creep-type) "creep")))))
 
 (def ^:private creep-colors {:normal "silver"
@@ -41,15 +48,31 @@
       (* base-speed 0.8)
       base-speed)))
 
-(defn- move-creep [creep tick-seconds]
-  (update creep :x + (* (creep-speed creep) tick-seconds)))
+(defn- get-delta [state creep]
+  (let [[x y :as coords] (pixel->tile (:coords creep))
+        path (find-path state coords (:tiles (:target creep)))
+        [nx ny] (first path)]
+    [(- nx x) (- ny y)]))
+
+(defn- make-targets [[x y] dist [dx dy]]
+  [[(+ x (* dx dist)) (+ y (* dy dist))]
+   [x (+ y (* dy dist))]
+   [(+ x (* dx dist)) y]
+   [x y]])
+
+(defn- move-creep [state creep tick-seconds]
+  (let [coords (:coords creep)
+        dist (* (creep-speed creep) tick-seconds) ; how many pixels this moves
+        delta (get-delta state creep)
+        possible-targets (remove #(blocked? state (pixel->tile %)) (make-targets coords dist delta))]
+    (assoc creep :coords (first possible-targets))))
 
 (defn- finished? [creep]
-  (>= (:x creep) 800))
+  (in-target? (:target creep) (pixel->tile (:coords creep))))
 
 (defn- move-creeps [state tick-seconds]
   (let [creeps (:creeps state)]
-    (assoc state :creeps (mapv #(move-creep % tick-seconds) creeps))))
+    (assoc state :creeps (mapv #(move-creep state % tick-seconds) creeps))))
 
 ;; Remove creeps that are at their target
 (defn- remove-creeps [state]

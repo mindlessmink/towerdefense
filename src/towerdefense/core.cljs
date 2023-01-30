@@ -1,31 +1,36 @@
 (ns towerdefense.core
-  (:require (towerdefense.render :refer (render-game))
-            (towerdefense.tower :refer (Tower make-tower))
-            (towerdefense.creep :refer (Creep make-creep update-creeps))))
+  (:require (towerdefense.creep :refer [Creep
+                                        make-creep
+                                        update-creeps])
+            (towerdefense.field :refer [Target
+                                        make-target])
+            (towerdefense.render :refer [render-game])
+            (towerdefense.tower :refer [Tower
+                                        make-tower])))
 
 ;; This is mostly for testing purposes
 (defn add-random-tower [state]
   (let [tower (make-tower (rand-nth [:pellet :squirt :dart])
                           (inc (rand-int 9))
-                          (rand-int 49)
+                          (+ 10 (rand-int 30))
                           (rand-int 39))]
     (update state :towers conj tower)))
 
 ;; And so is this...
 (defn maybe-add-random-tower [state]
-  (if (zero? (mod (:frames-rendered state) 100))
+  (if (zero? (mod (:frames-rendered state) 30))
     (add-random-tower state)
     state))
 
 (defn add-random-creep [state]
   (let [creep (make-creep (rand-nth [:normal :fast :immune :group])
                           (inc (rand-int 50))
-                          0
-                          (rand-int 600))]
+                          [0 (rand-int 640)]
+                          (rand-nth (:targets state)))]
     (update state :creeps conj creep)))
 
 (defn maybe-add-random-creep [state]
-  (if (zero? (rand-int 50))
+  (if (zero? (rand-int 150))
     (add-random-creep state)
     state))
 
@@ -43,14 +48,15 @@
       (.requestAnimationFrame js/window
                               (frame-callback new-state new-timestamp)))))
 
-(defn new-game []
+(def initial-state
   {:frames-rendered 0
    :towers []
    :creeps []
    :money 100
-   :lives 20})
+   :lives 20
+   :targets [(make-target [[49 18] [49 19] [49 20] [49 21]])]})
 
 (defn start-game [timestamp]
-  (.requestAnimationFrame js/window (frame-callback (new-game) timestamp)))
+  (.requestAnimationFrame js/window (frame-callback initial-state timestamp)))
 
 (.requestAnimationFrame js/window start-game)
