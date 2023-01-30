@@ -4,6 +4,8 @@
                                         update-creeps])
             (towerdefense.field :refer [Target
                                         make-target])
+            (towerdefense.input :refer [init-input
+                                        process-inputs])
             (towerdefense.render :refer [render-game])
             (towerdefense.tower :refer [Tower
                                         make-tower])))
@@ -36,7 +38,7 @@
 
 (defn update-state [state tick-time]
   (-> state
-      maybe-add-random-tower
+      process-inputs
       maybe-add-random-creep
       (update-creeps tick-time)
       (update :frames-rendered inc)))
@@ -59,4 +61,5 @@
 (defn start-game [timestamp]
   (.requestAnimationFrame js/window (frame-callback initial-state timestamp)))
 
+(init-input)
 (.requestAnimationFrame js/window start-game)

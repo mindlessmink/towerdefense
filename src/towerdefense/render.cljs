@@ -1,8 +1,10 @@
 (ns towerdefense.render
-  (:require (cljs.math :refer (PI))
+  (:require (cljs.math :refer [PI
+                               round])
             (towerdefense.creep :refer [Creep
                                         creep-color])
-            (towerdefense.field :refer [Target])
+            (towerdefense.field :refer [Target
+                                        pixel->tile])
             (towerdefense.tower :refer [Tower])))
 
 (defn- get-2d-context [canvas-name]
@@ -47,13 +49,21 @@
             true)
       (.fill context))))
 
+(defn- draw-tower-to-build [context state]
+  (set! (.-fillStyle context) "green")
+  (let [[mouse-x mouse-y :as mouse-pos] (:mouse-pos state)
+        [middle-x middle-y] [(round (/ mouse-x 16))
+                             (round (/ mouse-y 16))]]
+    (.fillRect context (- (* middle-x 16) 16) (- (* middle-y 16) 16) 32 32)))
+
 (defn- draw-game-canvas [state]
   (let [context (get-2d-context "game-canvas")]
     (set! (.-fillStyle context) "#ddddaa")
     (.fillRect context 0 0 800 640)
     (draw-towers context state)
     (draw-targets context state)
-    (draw-creeps context state)))
+    (draw-creeps context state)
+    (draw-tower-to-build context state)))
 
 (defn- draw-side-panel [state]
   (let [context (get-2d-context "side-panel")]
@@ -63,6 +73,10 @@
     (set! (.-font context) "16px sans")
     (.fillText context (str "Money: $" (:money state)) 0 20)
     (.fillText context (str "Lives: " (:lives state)) 0 50)
+    (.fillText context
+               (str "Selected tower: "
+                    (name (get state :tower-to-build "")))
+               0 80)
     (.fillText context (str "Frame: " (:frames-rendered state)) 0 590)))
 
 (defn render-game [state]
