@@ -112,29 +112,25 @@
 
 ;; A more efficient alternative to the above, I hope...
 (defn make-path-map [state goal-tiles]
-  (let [blockmap (make-blockmap state)
-        init-neighbors (reduce merge-sets
-                               (hash-set)
-                               (map (fn [tile]
-                                      (apply hash-set (valid-neighbors tile blockmap)))
-                                    goal-tiles))]
+  (let [blockmap (make-blockmap state)]
     (loop [path-map (apply conj (hash-map) (map (fn [tile]
                                                   [tile nil])
                                                 goal-tiles))
-           open-set (apply sorted-set (map (fn [tile]
-                                             [0 tile])
-                                           goal-tiles))]
+           open-set (apply hash-set goal-tiles)]
       (if (empty? open-set)
         path-map
-        (let [[cost curr-tile :as item] (first open-set)
-              remaining (disj open-set item)
-              neighbors (remove #(contains? path-map %) (valid-neighbors curr-tile blockmap))]
-          (recur (apply conj path-map (map (fn [tile]
-                                             [tile curr-tile])
-                                           neighbors))
-                 (apply conj remaining (map (fn [nbr]
-                                              [(inc cost) nbr])
-                                            neighbors))))))))
+        (let [neighbors (remove (fn [[nbr next-tile]]
+                                  (contains? path-map nbr))
+                                (reduce merge-sets
+                                        (hash-set)
+                                        (map (fn [tile]
+                                               (apply hash-set
+                                                      (map (fn [nbr]
+                                                            [nbr tile])
+                                                           (valid-neighbors tile blockmap))))
+                                             open-set)))]
+          (recur (apply conj path-map neighbors)
+                 (apply hash-set (map first neighbors))))))))
 
 (defn find-path-on-map [path-map start-tile]
   (let [next-tile (get path-map start-tile)]
