@@ -43,7 +43,7 @@
   (and (<= 0 (first tile) 49)
        (<= 0 (second tile) 39)))
 
-(defn- neighbors [tile]
+(defn- find-neighbors [tile]
   (map (fn [x]
          [(+ (first tile) (first x))
           (+ (second tile) (second x))])
@@ -52,7 +52,7 @@
         [-1  1] [0  1] [1  1]]))
 
 (defn- valid-neighbors [tile blockmap]
-  (->> (neighbors tile)
+  (->> (find-neighbors tile)
        (filter in-game-area?)
        (remove #(contains? blockmap %))))
 
@@ -109,3 +109,34 @@
                                  [nbr curr])
                                good-neighbors))
                    (apply conj cheapest good-neighbors))))))))
+
+;; A more efficient alternative to the above, I hope...
+(defn make-path-map [state goal-tiles]
+  (let [blockmap (make-blockmap state)
+        init-neighbors (reduce merge-sets
+                               (hash-set)
+                               (map (fn [tile]
+                                      (apply hash-set (valid-neighbors tile blockmap)))
+                                    goal-tiles))]
+    (.log js/console (str "make-path-map: got " (count goal-tiles) " goals"))
+    (loop [path-map (apply conj (hash-map) (map (fn [tile]
+                                                  [tile nil])
+                                                goal-tiles))
+           open-set (apply hash-set (remove (partial contains? path-map) init-neighbors))]
+      (.log js/console (str "open-set size: " (count open-set)))
+      (if (empty? open-set)
+        path-map
+        (let [item (first open-set)
+              remaining (disj open-set item)
+              neighbors (remove #(contains? path-map %) (valid-neighbors item blockmap))]
+          (.log js/console (str "curr item: " (first item) ", " (second item)))
+          (recur (apply conj path-map (map (fn [tile]
+                                             [tile item])
+                                           neighbors))
+                 (apply conj remaining neighbors)))))))
+
+(defn find-path-on-map [path-map start-tile]
+  (let [next-tile (get path-map start-tile)]
+    (if (nil? next-tile)
+      '()
+      (conj (find-path-on-map path-map next-tile) next-tile))))

@@ -5,7 +5,9 @@
             (towerdefense.field :refer [Target
                                         blocked?
                                         find-path
+                                        find-path-on-map
                                         in-target?
+                                        make-path-map
                                         pixel->tile])))
 
 (defrecord Creep [creep-type health max-health value boss? coords target id])
@@ -48,9 +50,9 @@
       (* base-speed 0.8)
       base-speed)))
 
-(defn- get-delta [state creep]
+(defn- get-delta [state path-map creep]
   (let [[x y :as coords] (pixel->tile (:coords creep))
-        path (find-path state coords (:tiles (:target creep)))
+        path (find-path-on-map path-map coords)
         [nx ny] (first path)]
     [(- nx x) (- ny y)]))
 
@@ -60,10 +62,10 @@
    [(+ x (* dx dist)) y]
    [x y]])
 
-(defn- move-creep [state creep tick-seconds]
+(defn- move-creep [state path-map creep tick-seconds]
   (let [coords (:coords creep)
         dist (* (creep-speed creep) tick-seconds) ; how many pixels this moves
-        delta (get-delta state creep)
+        delta (get-delta state path-map creep)
         possible-targets (remove #(blocked? state (pixel->tile %)) (make-targets coords dist delta))]
     (assoc creep :coords (first possible-targets))))
 
@@ -71,8 +73,10 @@
   (in-target? (:target creep) (pixel->tile (:coords creep))))
 
 (defn- move-creeps [state tick-seconds]
-  (let [creeps (:creeps state)]
-    (assoc state :creeps (mapv #(move-creep state % tick-seconds) creeps))))
+  (let [creeps (:creeps state)
+        ;; FIXME: assumes all creeps have the same target
+        path-map (make-path-map state (:tiles (first (:targets state))))]
+    (assoc state :creeps (mapv #(move-creep state path-map % tick-seconds) creeps))))
 
 ;; Remove creeps that are at their target
 (defn- remove-creeps [state]
