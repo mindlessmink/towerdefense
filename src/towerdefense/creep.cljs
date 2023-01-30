@@ -75,7 +75,7 @@
 (defn- move-creeps [state tick-seconds]
   (let [creeps (:creeps state)
         ;; FIXME: assumes all creeps have the same target
-        path-map (make-path-map state (:tiles (first (:targets state))))]
+        path-map (:path-map state)]
     (assoc state :creeps (mapv #(move-creep state path-map % tick-seconds) creeps))))
 
 ;; Remove creeps that are at their target

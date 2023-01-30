@@ -118,22 +118,23 @@
                                (map (fn [tile]
                                       (apply hash-set (valid-neighbors tile blockmap)))
                                     goal-tiles))]
-    (.log js/console (str "make-path-map: got " (count goal-tiles) " goals"))
     (loop [path-map (apply conj (hash-map) (map (fn [tile]
                                                   [tile nil])
                                                 goal-tiles))
-           open-set (apply hash-set (remove (partial contains? path-map) init-neighbors))]
-      (.log js/console (str "open-set size: " (count open-set)))
+           open-set (apply sorted-set (map (fn [tile]
+                                             [0 tile])
+                                           goal-tiles))]
       (if (empty? open-set)
         path-map
-        (let [item (first open-set)
+        (let [[cost curr-tile :as item] (first open-set)
               remaining (disj open-set item)
-              neighbors (remove #(contains? path-map %) (valid-neighbors item blockmap))]
-          (.log js/console (str "curr item: " (first item) ", " (second item)))
+              neighbors (remove #(contains? path-map %) (valid-neighbors curr-tile blockmap))]
           (recur (apply conj path-map (map (fn [tile]
-                                             [tile item])
+                                             [tile curr-tile])
                                            neighbors))
-                 (apply conj remaining neighbors)))))))
+                 (apply conj remaining (map (fn [nbr]
+                                              [(inc cost) nbr])
+                                            neighbors))))))))
 
 (defn find-path-on-map [path-map start-tile]
   (let [next-tile (get path-map start-tile)]
