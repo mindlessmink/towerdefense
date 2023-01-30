@@ -40,8 +40,8 @@
   [(floor (/ x 16)) (floor (/ y 16))])
 
 (defn- in-game-area? [tile]
-  (and (<= 0 (:first tile) 49)
-       (<= 0 (:second tile) 39)))
+  (and (<= 0 (first tile) 49)
+       (<= 0 (second tile) 39)))
 
 (defn- neighbors [tile]
   (map (fn [x]
