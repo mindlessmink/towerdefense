@@ -8,19 +8,14 @@
             (towerdefense.input :refer [init-input
                                         process-inputs])
             (towerdefense.render :refer [render-game])
+            (towerdefense.spawner :refer [init-spawners
+                                          spawn-creep])
             (towerdefense.tower :refer [Tower
                                         make-tower])))
 
-(defn add-random-creep [state]
-  (let [creep (make-creep (rand-nth [:normal :fast :immune :group])
-                          (inc (rand-int 50))
-                          [0 (rand-int 30)]
-                          (rand-nth (:targets state)))]
-    (update state :creeps conj creep)))
-
 (defn maybe-add-random-creep [state]
   (if (zero? (rand-int 150))
-    (add-random-creep state)
+    (spawn-creep (:spawner state) state)
     state))
 
 (defn maybe-update-path-map [state]
@@ -53,11 +48,12 @@
    :creeps []
    :money 200
    :lives 20
-   :targets [(make-target [[39 13] [39 14] [39 15] [39 16]])]
+   :targets (hash-set)
    :path-map nil})
 
 (defn start-game [timestamp]
-  (.requestAnimationFrame js/window (frame-callback initial-state timestamp)))
+  (let [state (init-spawners initial-state)]
+    (.requestAnimationFrame js/window (frame-callback state timestamp))))
 
 (init-input)
 (.requestAnimationFrame js/window start-game)
