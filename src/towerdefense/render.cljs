@@ -5,7 +5,8 @@
                                         creep-color])
             (towerdefense.field :refer [Target
                                         pixel->tile])
-            (towerdefense.tower :refer [Tower])))
+            (towerdefense.tower :refer [Tower
+                                        tower-cost])))
 
 (defn- get-2d-context [canvas-name]
   (.getContext (.getElementById js/document canvas-name) "2d"))
@@ -75,7 +76,10 @@
     (.fillText context (str "Lives: " (:lives state)) 0 50)
     (.fillText context
                (str "Selected tower: "
-                    (name (get state :tower-to-build "")))
+                    (name (get state :tower-to-build ""))
+                    " ($"
+                    (tower-cost (get state :tower-to-build))
+                    ")")
                0 80)
     (.fillText context (str "Frame: " (:frames-rendered state)) 0 590)))
 

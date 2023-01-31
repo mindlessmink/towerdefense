@@ -3,7 +3,8 @@
 (ns towerdefense.input
   (:require (cljs.math :refer [round])
             (towerdefense.tower :refer [Tower
-                                        make-tower])))
+                                        make-tower
+                                        tower-cost])))
 
 (def ^:private pressed-keys (atom []))
 
@@ -42,13 +43,18 @@
 (defn- try-build-tower [state]
   (let [[x y as pos] (:mouse-pos state)
         tower-to-build (:tower-to-build state)
-        tower (make-tower :tower-to-build
-                          1
-                          (dec (round (/ x 16)))
-                          (dec (round (/ y 16))))]
-    (if-not tower-to-build
+        cost (tower-cost tower-to-build)
+        money (:money state)]
+    (if (or (nil? tower-to-build)
+            (< money cost))
       state
-      (update state :towers conj tower))))
+      (let [tower (make-tower tower-to-build
+                              1
+                              (dec (round (/ x 16)))
+                              (dec (round (/ y 16))))]
+        (-> state
+            (update :towers conj tower)
+            (update :money - cost))))))
 
 (defn- process-mouse-clicks [state]
   (let [clicked? (deref mouse-clicked)]

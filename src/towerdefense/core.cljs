@@ -54,7 +54,7 @@
   {:frames-rendered 0
    :towers []
    :creeps []
-   :money 100
+   :money 200
    :lives 20
    :targets [(make-target [[49 18] [49 19] [49 20] [49 21]])]})
 
