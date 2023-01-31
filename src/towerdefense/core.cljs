@@ -10,24 +10,10 @@
             (towerdefense.tower :refer [Tower
                                         make-tower])))
 
-;; This is mostly for testing purposes
-(defn add-random-tower [state]
-  (let [tower (make-tower (rand-nth [:pellet :squirt :dart])
-                          (inc (rand-int 9))
-                          (+ 10 (rand-int 30))
-                          (rand-int 39))]
-    (update state :towers conj tower)))
-
-;; And so is this...
-(defn maybe-add-random-tower [state]
-  (if (zero? (mod (:frames-rendered state) 30))
-    (add-random-tower state)
-    state))
-
 (defn add-random-creep [state]
   (let [creep (make-creep (rand-nth [:normal :fast :immune :group])
                           (inc (rand-int 50))
-                          [0 (rand-int 640)]
+                          [0 (rand-int 480)]
                           (rand-nth (:targets state)))]
     (update state :creeps conj creep)))
 
@@ -56,7 +42,7 @@
    :creeps []
    :money 200
    :lives 20
-   :targets [(make-target [[49 18] [49 19] [49 20] [49 21]])]})
+   :targets [(make-target [[39 13] [39 14] [39 15] [39 16]])]})
 
 (defn start-game [timestamp]
   (.requestAnimationFrame js/window (frame-callback initial-state timestamp)))

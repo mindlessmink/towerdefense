@@ -60,7 +60,7 @@
 (defn- draw-game-canvas [state]
   (let [context (get-2d-context "game-canvas")]
     (set! (.-fillStyle context) "#ddddaa")
-    (.fillRect context 0 0 800 640)
+    (.fillRect context 0 0 640 480)
     (draw-towers context state)
     (draw-targets context state)
     (draw-creeps context state)
@@ -69,7 +69,7 @@
 (defn- draw-side-panel [state]
   (let [context (get-2d-context "side-panel")]
     (set! (.-fillStyle context) "#77ff77")
-    (.fillRect context 0 0 200 640)
+    (.fillRect context 0 0 200 480)
     (set! (.-fillStyle context) "black")
     (set! (.-font context) "16px sans")
     (.fillText context (str "Money: $" (:money state)) 0 20)
@@ -81,7 +81,7 @@
                     (tower-cost (get state :tower-to-build))
                     ")")
                0 80)
-    (.fillText context (str "Frame: " (:frames-rendered state)) 0 590)))
+    (.fillText context (str "Frame: " (:frames-rendered state)) 0 450)))
 
 (defn render-game [state]
   (draw-game-canvas state)
