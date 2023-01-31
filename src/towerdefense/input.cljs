@@ -41,11 +41,14 @@
 
 (defn- try-build-tower [state]
   (let [[x y as pos] (:mouse-pos state)
-        tower (make-tower (:tower-to-build state)
+        tower-to-build (:tower-to-build state)
+        tower (make-tower :tower-to-build
                           1
                           (dec (round (/ x 16)))
                           (dec (round (/ y 16))))]
-    (update state :towers conj tower)))
+    (if-not tower-to-build
+      state
+      (update state :towers conj tower))))
 
 (defn- process-mouse-clicks [state]
   (let [clicked? (deref mouse-clicked)]
