@@ -33,6 +33,7 @@
     "1" (assoc state :tower-to-build :pellet)
     "2" (assoc state :tower-to-build :squirt)
     "3" (assoc state :tower-to-build :dart)
+    "m" (update state :money + 10000) ; for testing
     :else state))
 
 (defn- process-pressed-keys [state]
