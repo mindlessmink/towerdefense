@@ -3,6 +3,7 @@
                                         make-creep
                                         update-creeps])
             (towerdefense.field :refer [Target
+                                        make-blockmap
                                         make-path-map
                                         make-target])
             (towerdefense.input :refer [init-input
@@ -11,24 +12,30 @@
             (towerdefense.spawner :refer [init-spawners
                                           update-spawners])
             (towerdefense.tower :refer [Tower
-                                        make-tower])))
+                                        make-tower
+                                        update-bullets
+                                        update-towers])))
 
 (defn maybe-update-path-map [state]
   (let [path-map (:path-map state)
-        old-towers (:old-towers state)]
-    (if (or (nil? path-map) (not= old-towers (:towers state)))
+        blockmap (make-blockmap state)
+        old-blockmap (:old-blockmap state)]
+    (if (or (nil? path-map) (not= old-blockmap blockmap))
       (assoc state
              :path-map (make-path-map state (:tiles (first (:targets state))))
-             :old-towers (:towers state))
+             :old-blockmap blockmap)
       state)))
 
 (defn update-state [state tick-time]
-  (-> state
-      process-inputs
-      maybe-update-path-map
-      (update-spawners (/ tick-time 1000))
-      (update-creeps tick-time)
-      (update :frames-rendered inc)))
+  (let [tick-seconds (/ tick-time 1000)]
+    (-> state
+        process-inputs
+        maybe-update-path-map
+        (update-spawners tick-seconds)
+        (update-towers tick-seconds)
+        (update-bullets tick-seconds)
+        (update-creeps tick-time)
+        (update :frames-rendered inc))))
 
 (defn frame-callback [state old-timestamp]
   (fn [new-timestamp]
@@ -41,6 +48,8 @@
   {:frames-rendered 0
    :towers []
    :creeps (hash-map)
+   :bullets []
+   :score 0
    :money 200
    :lives 20
    :targets (hash-set)

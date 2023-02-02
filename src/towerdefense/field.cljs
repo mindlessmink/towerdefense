@@ -30,7 +30,7 @@
   (str "(" (first tile) ", " (second tile) ")"))
 
 ;; Set of tiles that are blocked (by towers etc)
-(defn- make-blockmap [state]
+(defn make-blockmap [state]
   (make-tower-blockmap (:towers state)))
 
 (defn blocked? [state tile]

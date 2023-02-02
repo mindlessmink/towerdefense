@@ -63,6 +63,23 @@
                 symbol (get delta->symbol delta "x")]
             (.fillText context symbol (* 16 (inc x)) (* 16 (inc y)))))))))
 
+(defn- draw-creep-health-bar [context creep]
+  (let [health (:health creep)
+        max-health (:max-health creep)
+        ratio (/ health max-health)
+        [x y] (mapv #(* tile-size %) (:coords creep))]
+    (set! (.-fillStyle context) "red")
+    (.fillRect context
+               (- x 8)
+               (+ y 8)
+               16 2)
+    (set! (.-fillStyle context) "green")
+    (.fillRect context
+               (- x 8)
+               (+ y 8)
+               (* 16 ratio)
+               2)))
+
 (defn- draw-creeps [context state]
   (doseq [creep-entry (:creeps state)]
     (let [creep (second creep-entry)
@@ -76,6 +93,21 @@
             x
             y
             size
+            0
+            (* 2 PI)
+            true)
+      (.fill context)
+      (draw-creep-health-bar context creep))))
+
+(defn- draw-bullets [context state]
+  (doseq [bullet (:bullets state)]
+    (let [[x y] (mapv #(* tile-size %) (:coords bullet))]
+      (set! (.-fillStyle context) "blue")
+      (.beginPath context)
+      (.arc context
+            x
+            y
+            2
             0
             (* 2 PI)
             true)
@@ -98,6 +130,7 @@
     (draw-towers context state)
     (draw-targets context state)
     (draw-creeps context state)
+    (draw-bullets context state)
     ; (draw-path-map context state)
     (draw-tower-to-build context state)))
 
@@ -123,8 +156,9 @@
     (.fillRect context 0 0 200 480)
     (set! (.-fillStyle context) "black")
     (set! (.-font context) "16px sans")
-    (.fillText context (str "Money: $" (:money state)) 0 20)
-    (.fillText context (str "Lives: " (:lives state)) 0 50)
+    (.fillText context (str "Score: " (:score state)) 0 20)
+    (.fillText context (str "Money: $" (:money state)) 0 40)
+    (.fillText context (str "Lives: " (:lives state)) 0 60)
     (.fillText context
                (str "Selected tower: "
                     (name (get state :tower-to-build ""))

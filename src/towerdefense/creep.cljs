@@ -14,8 +14,12 @@
 (defrecord Creep [creep-type health max-health value boss? coords target])
 
 (defn make-creep [creep-type wave boss? coords target]
-  (let [health (round (* 10 (pow 1.1 wave)))
-        value (ceil (/ wave 8))]
+  (let [health (if boss?
+                 (* 100 wave)
+                 (* 10 wave))
+        value (if boss?
+                (* 10 wave)
+                wave)]
     (Creep. creep-type
             health
             health
@@ -69,8 +73,12 @@
         possible-targets (remove #(blocked? state (mapv floor %)) (make-targets coords dist delta))]
     (assoc creep :coords (first possible-targets))))
 
+(defn- dead? [creep]
+  (<= (:health creep) 0))
+
 (defn- finished? [creep]
-  (in-target? (:target creep) (mapv floor (:coords creep))))
+  (and (in-target? (:target creep) (mapv floor (:coords creep)))
+       (not (dead? creep))))
 
 (defn- move-creeps [state tick-seconds]
   (let [creeps (:creeps state)
@@ -91,9 +99,16 @@
 ;; Remove creeps that are at their target
 (defn- remove-creeps [state]
   (let [creeps (:creeps state)
+        dead-creeps (filter #(dead? (second %)) creeps)
+        dead-creeps-value (apply + (map #(get-in % [1 :value])
+                                        dead-creeps))
         finished-creeps (filter #(finished? (second %)) creeps)]
     (-> state
+        (update :score + dead-creeps-value)
+        (update :money + dead-creeps-value)
         (update :lives - (count finished-creeps))
+        (update :creeps (fn [creeps]
+                          (apply dissoc creeps (map first dead-creeps))))
         (update :creeps (fn [creeps]
                           (apply dissoc creeps (map first finished-creeps)))))))
 
