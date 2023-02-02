@@ -3,6 +3,7 @@
                                         make-creep
                                         update-creeps])
             (towerdefense.field :refer [Target
+                                        make-path-map
                                         make-target])
             (towerdefense.input :refer [init-input
                                         process-inputs])
@@ -22,10 +23,20 @@
     (add-random-creep state)
     state))
 
+(defn maybe-update-path-map [state]
+  (let [path-map (:path-map state)
+        old-towers (:old-towers state)]
+    (if (or (nil? path-map) (not= old-towers (:towers state)))
+      (assoc state
+             :path-map (make-path-map state (:tiles (first (:targets state))))
+             :old-towers (:towers state))
+      state)))
+
 (defn update-state [state tick-time]
   (-> state
       process-inputs
       maybe-add-random-creep
+      maybe-update-path-map
       (update-creeps tick-time)
       (update :frames-rendered inc)))
 
@@ -42,7 +53,8 @@
    :creeps []
    :money 200
    :lives 20
-   :targets [(make-target [[39 13] [39 14] [39 15] [39 16]])]})
+   :targets [(make-target [[39 13] [39 14] [39 15] [39 16]])]
+   :path-map nil})
 
 (defn start-game [timestamp]
   (.requestAnimationFrame js/window (frame-callback initial-state timestamp)))

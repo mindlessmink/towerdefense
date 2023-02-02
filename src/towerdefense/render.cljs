@@ -37,6 +37,29 @@
         (set! (.-fillStyle context) "red")
         (.fillRect context x y tile-size tile-size)))))
 
+(def ^:private delta->symbol
+  {[-1 -1] "⇖"
+   [ 0 -1] "↑"
+   [ 1 -1] "⇗"
+   [-1  0] "←"
+   [ 1  0] "→"
+   [-1  1] "⇙"
+   [ 0  1] "↓"
+   [ 1  1] "⇘"})
+
+(defn- draw-path-map [context state]
+  (set! (.-fillStyle context) "black")
+  (set! (.-font context) "16px sans")
+  (let [path-map (:path-map state)]
+    (doseq [x (range 50)
+            y (range 40)]
+      (let [tile [x y]
+            next-tile (get path-map tile nil)]
+        (when-not (nil? next-tile)
+          (let [delta [(- (first next-tile) x) (- (second next-tile) y)]
+                symbol (get delta->symbol delta "x")]
+            (.fillText context symbol (* 16 (inc x)) (* 16 (inc y)))))))))
+
 (defn- draw-creeps [context state]
   (doseq [creep (:creeps state)]
     (let [size (if (:boss? creep)
@@ -71,6 +94,7 @@
     (draw-towers context state)
     (draw-targets context state)
     (draw-creeps context state)
+    ; (draw-path-map context state)
     (draw-tower-to-build context state)))
 
 (defn- draw-side-panel [state]
