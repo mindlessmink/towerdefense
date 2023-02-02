@@ -11,7 +11,7 @@
                                         make-path-map
                                         pixel->tile])))
 
-(defrecord Creep [creep-type health max-health value boss? coords target id])
+(defrecord Creep [creep-type health max-health value boss? coords target])
 
 (defn make-creep [creep-type wave boss? coords target]
   (let [health (round (* 10 (pow 1.1 wave)))
@@ -22,8 +22,7 @@
             value
             boss?
             coords
-            target
-            (gensym (str (name creep-type) "creep")))))
+            target)))
 
 (def ^:private creep-colors {:normal "silver"
                              :group "blue"
@@ -77,15 +76,26 @@
   (let [creeps (:creeps state)
         ;; FIXME: assumes all creeps have the same target
         path-map (:path-map state)]
-    (assoc state :creeps (mapv #(move-creep state path-map % tick-seconds) creeps))))
+    (assoc state
+           :creeps 
+           (apply conj
+                   creeps
+                   (map (fn [creep]
+                          [(first creep)
+                           (move-creep state
+                                       path-map
+                                       (second creep)
+                                       tick-seconds)])
+                        creeps)))))
 
 ;; Remove creeps that are at their target
 (defn- remove-creeps [state]
   (let [creeps (:creeps state)
-        finished-creeps (filter finished? creeps)]
+        finished-creeps (filter #(finished? (second %)) creeps)]
     (-> state
         (update :lives - (count finished-creeps))
-        (update :creeps #(filterv (complement finished?) %)))))
+        (update :creeps (fn [creeps]
+                          (apply dissoc creeps (map first finished-creeps)))))))
 
 (defn update-creeps [state tick-time]
   (let [tick-seconds (/ tick-time 1000)]

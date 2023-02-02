@@ -40,7 +40,7 @@
 (def initial-state
   {:frames-rendered 0
    :towers []
-   :creeps []
+   :creeps (hash-map)
    :money 200
    :lives 20
    :targets (hash-set)

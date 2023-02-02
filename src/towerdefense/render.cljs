@@ -64,8 +64,9 @@
             (.fillText context symbol (* 16 (inc x)) (* 16 (inc y)))))))))
 
 (defn- draw-creeps [context state]
-  (doseq [creep (:creeps state)]
-    (let [size (if (:boss? creep)
+  (doseq [creep-entry (:creeps state)]
+    (let [creep (second creep-entry)
+          size (if (:boss? creep)
                  (* tile-size 0.75)
                  (* tile-size 0.5))
           [x y] (mapv #(* tile-size %) (:coords creep))]

@@ -105,7 +105,12 @@
         updated-waves (update-waves new-waves)
         new-spawner (assoc spawner :waves updated-waves)]
     (-> state
-        (update :creeps #(reduce conj % new-creeps))
+        (assoc :creeps (apply conj
+                              old-creeps
+                              (map (fn [creep]
+                                     [(gensym "creep")
+                                      creep])
+                                   new-creeps)))
         (assoc :spawner new-spawner))))
 
 (defn update-spawners [state tick-seconds]
