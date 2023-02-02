@@ -1,5 +1,6 @@
 (ns towerdefense.creep
   (:require (cljs.math :refer [ceil
+                               floor
                                pow
                                round])
             (towerdefense.field :refer [Target
@@ -33,23 +34,23 @@
 (defn creep-color [creep]
   (get creep-colors (:creep-type creep) "white"))
 
-(def ^:private creep-speeds {:normal 50
-                             :group 50
-                             :fast 100
-                             :immune 50
-                             :flying 60
-                             :split 40
-                             :dark 25})
+(def ^:private creep-speeds {:normal 4
+                             :group 4
+                             :fast 8
+                             :immune 4
+                             :flying 5
+                             :split 3
+                             :dark 2})
 
-;; Pixels per second
+;; Tiles per second
 (defn- creep-speed [creep]
-  (let [base-speed (get creep-speeds (:creep-type creep) 50)]
+  (let [base-speed (get creep-speeds (:creep-type creep) 4)]
     (if (:boss? creep)
       (* base-speed 0.8)
       base-speed)))
 
 (defn- get-delta [state creep]
-  (let [[x y :as coords] (pixel->tile (:coords creep))
+  (let [[x y :as coords] (mapv floor (:coords creep))
         path (find-path state coords (:tiles (:target creep)))
         [nx ny] (first path)]
     [(- nx x) (- ny y)]))
@@ -64,11 +65,11 @@
   (let [coords (:coords creep)
         dist (* (creep-speed creep) tick-seconds) ; how many pixels this moves
         delta (get-delta state creep)
-        possible-targets (remove #(blocked? state (pixel->tile %)) (make-targets coords dist delta))]
+        possible-targets (remove #(blocked? state (mapv floor %)) (make-targets coords dist delta))]
     (assoc creep :coords (first possible-targets))))
 
 (defn- finished? [creep]
-  (in-target? (:target creep) (pixel->tile (:coords creep))))
+  (in-target? (:target creep) (mapv floor (:coords creep))))
 
 (defn- move-creeps [state tick-seconds]
   (let [creeps (:creeps state)]

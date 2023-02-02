@@ -13,7 +13,7 @@
 (defn add-random-creep [state]
   (let [creep (make-creep (rand-nth [:normal :fast :immune :group])
                           (inc (rand-int 50))
-                          [0 (rand-int 480)]
+                          [0 (rand-int 30)]
                           (rand-nth (:targets state)))]
     (update state :creeps conj creep)))
 
