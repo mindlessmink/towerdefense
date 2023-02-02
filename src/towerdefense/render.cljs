@@ -1,10 +1,13 @@
 (ns towerdefense.render
   (:require (cljs.math :refer [PI
+                               ceil
                                round])
             (towerdefense.creep :refer [Creep
                                         creep-color])
             (towerdefense.field :refer [Target
                                         pixel->tile])
+            (towerdefense.spawner :refer [describe-wave
+                                          wave-time])
             (towerdefense.tower :refer [Tower
                                         tower-cost])))
 
@@ -97,6 +100,22 @@
     ; (draw-path-map context state)
     (draw-tower-to-build context state)))
 
+(defn- draw-wave-info [context state]
+  (let [spawner (:spawner state)
+        wave-num (:curr-wave-num spawner)
+        next-wave (inc wave-num)]
+    (if (zero? wave-num)
+      (.fillText context "Press <n> to start" 0 200)
+      (do
+        (.fillText context (str "Current wave: " wave-num) 0 200)
+        (.fillText context (describe-wave wave-num) 20 220)
+        (if-let [timer (:time-since-last-wave spawner)]
+          (let [time-remaining (ceil (- wave-time timer))]
+            (.fillText context
+                       (str "Next wave in " time-remaining " seconds")
+                       0 240)
+            (.fillText context (describe-wave next-wave) 20 260)))))))
+
 (defn- draw-side-panel [state]
   (let [context (get-2d-context "side-panel")]
     (set! (.-fillStyle context) "#77ff77")
@@ -112,6 +131,7 @@
                     (tower-cost (get state :tower-to-build))
                     ")")
                0 80)
+    (draw-wave-info context state)
     (.fillText context (str "Frame: " (:frames-rendered state)) 0 450)))
 
 (defn render-game [state]

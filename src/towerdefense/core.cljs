@@ -9,14 +9,9 @@
                                         process-inputs])
             (towerdefense.render :refer [render-game])
             (towerdefense.spawner :refer [init-spawners
-                                          spawn-creep])
+                                          update-spawners])
             (towerdefense.tower :refer [Tower
                                         make-tower])))
-
-(defn maybe-add-random-creep [state]
-  (if (zero? (rand-int 150))
-    (spawn-creep (:spawner state) state)
-    state))
 
 (defn maybe-update-path-map [state]
   (let [path-map (:path-map state)
@@ -30,8 +25,8 @@
 (defn update-state [state tick-time]
   (-> state
       process-inputs
-      maybe-add-random-creep
       maybe-update-path-map
+      (update-spawners (/ tick-time 1000))
       (update-creeps tick-time)
       (update :frames-rendered inc)))
 

@@ -34,6 +34,7 @@
     "2" (assoc state :tower-to-build :squirt)
     "3" (assoc state :tower-to-build :dart)
     "m" (update state :money + 10000) ; for testing
+    "n" (assoc-in state [:spawner :time-since-last-wave] 10000) ; ugly...
     :else state))
 
 (defn- process-pressed-keys [state]

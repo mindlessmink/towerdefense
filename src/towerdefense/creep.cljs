@@ -13,14 +13,14 @@
 
 (defrecord Creep [creep-type health max-health value boss? coords target id])
 
-(defn make-creep [creep-type wave coords target]
+(defn make-creep [creep-type wave boss? coords target]
   (let [health (round (* 10 (pow 1.1 wave)))
         value (ceil (/ wave 8))]
     (Creep. creep-type
             health
             health
             value
-            (zero? (mod wave 8))
+            boss?
             coords
             target
             (gensym (str (name creep-type) "creep")))))
