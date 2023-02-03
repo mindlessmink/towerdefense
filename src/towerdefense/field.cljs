@@ -10,7 +10,7 @@
 (defn in-target? [target tile]
   (contains? (:tiles target) tile))
 
-(defn- tower-tiles [tower]
+(defn tower-tiles [tower]
   (let [x (:x tower)
         y (:y tower)]
     (hash-set [x y]

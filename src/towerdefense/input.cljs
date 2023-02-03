@@ -2,6 +2,8 @@
 
 (ns towerdefense.input
   (:require (cljs.math :refer [round])
+            (towerdefense.field :refer [make-blockmap
+                                        tower-tiles])
             (towerdefense.tower :refer [Tower
                                         make-tower
                                         tower-cost])))
@@ -53,10 +55,14 @@
       (let [tower (make-tower tower-to-build
                               1
                               (dec (round (/ x 16)))
-                              (dec (round (/ y 16))))]
-        (-> state
-            (update :towers conj tower)
-            (update :money - cost))))))
+                              (dec (round (/ y 16))))
+            tiles (tower-tiles tower)
+            blockmap (make-blockmap state)]
+        (if (not-any? #(contains? blockmap %) tiles)
+          (-> state
+              (update :towers conj tower)
+              (update :money - cost))
+          state)))))
 
 (defn- process-mouse-clicks [state]
   (let [clicked? (deref mouse-clicked)]
