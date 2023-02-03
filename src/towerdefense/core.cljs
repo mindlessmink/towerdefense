@@ -5,7 +5,8 @@
             (towerdefense.field :refer [Target
                                         make-blockmap
                                         make-path-map
-                                        make-target])
+                                        make-target
+                                        maybe-update-path-map])
             (towerdefense.input :refer [init-input
                                         process-inputs])
             (towerdefense.render :refer [render-game])
@@ -15,16 +16,6 @@
                                         make-tower
                                         update-bullets
                                         update-towers])))
-
-(defn maybe-update-path-map [state]
-  (let [path-map (:path-map state)
-        blockmap (make-blockmap state)
-        old-blockmap (:old-blockmap state)]
-    (if (or (nil? path-map) (not= old-blockmap blockmap))
-      (assoc state
-             :path-map (make-path-map state (:tiles (first (:targets state))))
-             :old-blockmap blockmap)
-      state)))
 
 (defn update-state [state tick-time]
   (let [tick-seconds (/ tick-time 1000)]

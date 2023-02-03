@@ -3,6 +3,7 @@
 (ns towerdefense.input
   (:require (cljs.math :refer [round])
             (towerdefense.field :refer [make-blockmap
+                                        maybe-update-path-map
                                         tower-tiles])
             (towerdefense.tower :refer [Tower
                                         make-tower
@@ -44,6 +45,17 @@
     (reset! pressed-keys [])
     (reduce process-pressed-key state old-keys)))
 
+(defn- try-place-tower [tower cost state]
+  (let [updated-state (-> state
+                          (update :towers conj tower)
+                          (update :money - cost)
+                          maybe-update-path-map)
+        path-map (:path-map updated-state)
+        start-tiles (get-in state [:spawner :start-area])]
+    (if (every? #(contains? path-map %) start-tiles)
+      updated-state
+      state)))
+
 (defn- try-build-tower [state]
   (let [[x y as pos] (:mouse-pos state)
         tower-to-build (:tower-to-build state)
@@ -59,9 +71,7 @@
             tiles (tower-tiles tower)
             blockmap (make-blockmap state)]
         (if (not-any? #(contains? blockmap %) tiles)
-          (-> state
-              (update :towers conj tower)
-              (update :money - cost))
+          (try-place-tower tower cost state)
           state)))))
 
 (defn- process-mouse-clicks [state]

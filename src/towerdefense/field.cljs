@@ -137,3 +137,13 @@
     (if (nil? next-tile)
       '()
       (conj (find-path-on-map path-map next-tile) next-tile))))
+
+(defn maybe-update-path-map [state]
+  (let [path-map (:path-map state)
+        blockmap (make-blockmap state)
+        old-blockmap (:old-blockmap state)]
+    (if (or (nil? path-map) (not= old-blockmap blockmap))
+      (assoc state
+             :path-map (make-path-map state (:tiles (first (:targets state))))
+             :old-blockmap blockmap)
+      state)))
