@@ -18,19 +18,23 @@
   (.getContext (.getElementById js/document canvas-name) "2d"))
 
 (defn- draw-towers [context state]
-  (doseq [tower (:towers state)]
-    (let [x (* tile-size (:x tower))
-          y (* tile-size (:y tower))]
-      (set! (.-fillStyle context) "black")
-      (.fillRect context x y tower-size tower-size)
-      (set! (.-fillStyle context) "white")
-      (set! (.-font context) "16px sans")
-      (let [letter (-> (:tower-type tower)
-                       name
-                       first
-                       .toUpperCase)
-            level (:level tower)]
-        (.fillText context (str letter level) (+ 2 x) (+ tile-size y))))))
+  (let [selected-tower (:selected-tower state)]
+    (doseq [tower (:towers state)]
+      (let [x (* tile-size (:x tower))
+            y (* tile-size (:y tower))]
+        (if (and (not (nil? selected-tower))
+                 (= (:id tower) (:id selected-tower)))
+          (set! (.-fillStyle context) "#000088")
+          (set! (.-fillStyle context) "black"))
+        (.fillRect context x y tower-size tower-size)
+        (set! (.-fillStyle context) "white")
+        (set! (.-font context) "16px sans")
+        (let [letter (-> (:tower-type tower)
+                         name
+                         first
+                         .toUpperCase)
+              level (:level tower)]
+          (.fillText context (str letter level) (+ 2 x) (+ tile-size y)))))))
 
 (defn- draw-targets [context state]
   (doseq [target (:targets state)]
@@ -114,14 +118,15 @@
       (.fill context))))
 
 (defn- draw-tower-to-build [context state]
-  (set! (.-fillStyle context) "green")
-  (let [[mouse-x mouse-y :as mouse-pos] (:mouse-pos state)
-        [middle-x middle-y] [(round (/ mouse-x tile-size))
-                             (round (/ mouse-y tile-size))]]
-    (.fillRect context
-               (- (* middle-x tile-size) tile-size)
-               (- (* middle-y tile-size) tile-size)
-               tower-size tower-size)))
+  (when (:tower-to-build state)
+    (set! (.-fillStyle context) "green")
+    (let [[mouse-x mouse-y :as mouse-pos] (:mouse-pos state)
+          [middle-x middle-y] [(round (/ mouse-x tile-size))
+                               (round (/ mouse-y tile-size))]]
+      (.fillRect context
+                 (- (* middle-x tile-size) tile-size)
+                 (- (* middle-y tile-size) tile-size)
+                 tower-size tower-size))))
 
 (defn- draw-game-canvas [state]
   (let [context (get-2d-context "game-canvas")]
@@ -133,6 +138,12 @@
     (draw-bullets context state)
     ; (draw-path-map context state)
     (draw-tower-to-build context state)))
+
+(defn- draw-selected-tower [context state]
+  (when-let [tower (:selected-tower state)]
+    (.fillText context
+               (str "Selected tower: " (name (:tower-type tower)))
+               0 100)))
 
 (defn- draw-wave-info [context state]
   (let [spawner (:spawner state)
@@ -159,13 +170,15 @@
     (.fillText context (str "Score: " (:score state)) 0 20)
     (.fillText context (str "Money: $" (:money state)) 0 40)
     (.fillText context (str "Lives: " (:lives state)) 0 60)
-    (.fillText context
-               (str "Selected tower: "
-                    (name (get state :tower-to-build ""))
-                    " ($"
-                    (tower-cost (get state :tower-to-build))
-                    ")")
-               0 80)
+    (when-let [tower-to-build (:tower-to-build state)]
+      (.fillText context
+                 (str "Selected tower: "
+                      (name tower-to-build)
+                      " ($"
+                      (tower-cost tower-to-build)
+                      ")")
+                 0 80))
+    (draw-selected-tower context state)
     (draw-wave-info context state)
     (.fillText context (str "Frame: " (:frames-rendered state)) 0 450)))
 

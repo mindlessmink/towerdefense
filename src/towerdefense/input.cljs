@@ -1,7 +1,8 @@
 ;; This code is full of side effects and other nasty stuff, be careful
 
 (ns towerdefense.input
-  (:require (cljs.math :refer [round])
+  (:require (cljs.math :refer [floor
+                               round])
             (towerdefense.field :refer [make-blockmap
                                         maybe-update-path-map
                                         tower-tiles])
@@ -31,6 +32,15 @@
     (.addEventListener canvas "mousemove" mouse-move-handler)
     (.addEventListener canvas "mousedown" mouse-down-handler)))
 
+(defn- try-sell-tower [state]
+  (let [selected-tower (:selected-tower state)]
+    (if-not selected-tower
+      state
+      (-> state
+          (assoc :towers (filterv #(not= (:id selected-tower) (:id %)) (:towers state)))
+          (update :money + (floor (* (tower-cost (:tower-type selected-tower)) 0.8)))
+          (dissoc :selected-tower)))))
+
 (defn- process-pressed-key [state keycode]
   (case keycode
     "1" (assoc state :tower-to-build :pellet)
@@ -38,6 +48,7 @@
     "3" (assoc state :tower-to-build :dart)
     "m" (update state :money + 10000) ; for testing
     "n" (assoc-in state [:spawner :time-since-last-wave] 10000) ; ugly...
+    "s" (try-sell-tower state)
     :else state))
 
 (defn- process-pressed-keys [state]
@@ -57,7 +68,7 @@
       state)))
 
 (defn- try-build-tower [state]
-  (let [[x y as pos] (:mouse-pos state)
+  (let [[x y :as pos] (:mouse-pos state)
         tower-to-build (:tower-to-build state)
         cost (tower-cost tower-to-build)
         money (:money state)]
@@ -75,11 +86,23 @@
           state)))))
 
 (defn- process-mouse-clicks [state]
-  (let [clicked? (deref mouse-clicked)]
+  (let [clicked? (deref mouse-clicked)
+        [x y :as pos] (:mouse-pos state)
+        [tx ty :as clicked-tile] [(floor (/ x 16))
+                                  (floor (/ y 16))]
+        towers (:towers state)]
     (reset! mouse-clicked false)
     (if-not clicked?
       state
-      (try-build-tower state))))
+      (if-let [tower (first (filter (fn [tower]
+                                      (some #(= clicked-tile %)
+                                            (tower-tiles tower)))
+                                    towers))]
+        (-> state
+            (assoc :selected-tower tower)
+            (dissoc :tower-to-build))
+        (-> (try-build-tower state)
+            (dissoc :selected-tower))))))
 
 (defn- process-mouse-events [state]
   (-> state
