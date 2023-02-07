@@ -36,10 +36,11 @@
   (let [selected-tower (:selected-tower state)]
     (if-not selected-tower
       state
-      (-> state
-          (assoc :towers (filterv #(not= (:id selected-tower) (:id %)) (:towers state)))
-          (update :money + (floor (* (tower-cost (:tower-type selected-tower)) 0.8)))
-          (dissoc :selected-tower)))))
+      (let [tower (get (:towers state) selected-tower)]
+        (-> state
+            (update :towers dissoc selected-tower)
+            (update :money + (floor (* (tower-cost (:tower-type tower)) 0.8)))
+            (dissoc :selected-tower))))))
 
 (defn- process-pressed-key [state keycode]
   (case keycode
@@ -58,7 +59,7 @@
 
 (defn- try-place-tower [tower cost state]
   (let [updated-state (-> state
-                          (update :towers conj tower)
+                          (update :towers assoc (gensym "tower") tower)
                           (update :money - cost)
                           maybe-update-path-map)
         path-map (:path-map updated-state)
@@ -94,12 +95,12 @@
     (reset! mouse-clicked false)
     (if-not clicked?
       state
-      (if-let [tower (first (filter (fn [tower]
+      (if-let [tower (first (filter (fn [[id tower]]
                                       (some #(= clicked-tile %)
                                             (tower-tiles tower)))
                                     towers))]
         (-> state
-            (assoc :selected-tower tower)
+            (assoc :selected-tower (first tower))
             (dissoc :tower-to-build))
         (-> (try-build-tower state)
             (dissoc :selected-tower))))))

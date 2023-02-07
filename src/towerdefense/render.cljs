@@ -19,11 +19,10 @@
 
 (defn- draw-towers [context state]
   (let [selected-tower (:selected-tower state)]
-    (doseq [tower (:towers state)]
+    (doseq [[id tower] (:towers state)]
       (let [x (* tile-size (:x tower))
             y (* tile-size (:y tower))]
-        (if (and (not (nil? selected-tower))
-                 (= (:id tower) (:id selected-tower)))
+        (if (= id selected-tower)
           (set! (.-fillStyle context) "#000088")
           (set! (.-fillStyle context) "black"))
         (.fillRect context x y tower-size tower-size)
@@ -140,7 +139,7 @@
     (draw-tower-to-build context state)))
 
 (defn- draw-selected-tower [context state]
-  (when-let [tower (:selected-tower state)]
+  (when-let [tower (get (:towers state) (:selected-tower state))]
     (.fillText context
                (str "Selected tower: " (name (:tower-type tower)))
                0 100)))

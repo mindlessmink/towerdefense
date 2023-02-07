@@ -15,7 +15,7 @@
           :damage 20
           :radius 10}})
 
-(defrecord Tower [tower-type tower-def level x y id time-since-last-bullet])
+(defrecord Tower [tower-type tower-def level x y time-since-last-bullet])
 
 (defrecord Bullet [damage target coords])
 
@@ -26,7 +26,6 @@
             level
             x
             y
-            (gensym (str (name tower-type) "tower"))
             1000)))
 
 (defn tower-stat [tower-type stat]
@@ -45,9 +44,10 @@
   (tower-stat tower-type :radius))
 
 (defn- update-timers [towers tick-seconds]
-  (mapv (fn [tower]
-          (update tower :time-since-last-bullet + tick-seconds))
-        towers))
+  (reduce-kv (fn [m id tower]
+               (assoc m id (update tower :time-since-last-bullet + tick-seconds)))
+             (hash-map)
+             towers))
 
 (defn- should-fire? [tower]
   (>= (:time-since-last-bullet tower) (tower-fire-rate (:tower-type tower))))
@@ -80,16 +80,17 @@
         creeps (:creeps state)]
     (if (empty? creeps)
       (assoc state :towers updated-timers)
-      (let [firing-towers (filter should-fire? updated-timers)
-            fired-towers (mapv (fn [tower]
-                                 (if (should-fire? tower)
-                                   (assoc tower :time-since-last-bullet 0)
-                                   tower))
-                               updated-timers)
+      (let [firing-towers (filter #(should-fire? (second %)) updated-timers)
+            fired-towers (map (fn [[id tower]]
+                                (if (should-fire? tower)
+                                  [id (assoc tower :time-since-last-bullet 0)]
+                                  [id tower]))
+                              updated-timers)
             bullets (filterv (complement nil?)
-                             (map #(bullet-from-tower % creeps) firing-towers))]
+                             (map #(bullet-from-tower % creeps)
+                                  (map second firing-towers)))]
         (-> state
-            (assoc :towers fired-towers)
+            (assoc :towers (reduce conj (hash-map) fired-towers))
             (update :bullets (fn [old-bullets]
                                (apply conj old-bullets bullets))))))))
 

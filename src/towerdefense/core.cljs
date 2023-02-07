@@ -37,7 +37,7 @@
 
 (def initial-state
   {:frames-rendered 0
-   :towers []
+   :towers (hash-map)
    :creeps (hash-map)
    :bullets []
    :score 0

@@ -31,7 +31,7 @@
 
 ;; Set of tiles that are blocked (by towers etc)
 (defn make-blockmap [state]
-  (make-tower-blockmap (:towers state)))
+  (make-tower-blockmap (map second (:towers state))))
 
 (defn blocked? [state tile]
   (contains? (make-blockmap state) tile))
