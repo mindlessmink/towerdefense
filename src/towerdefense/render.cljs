@@ -5,6 +5,7 @@
             (towerdefense.creep :refer [Creep
                                         creep-color])
             (towerdefense.field :refer [Target
+                                        find-targets
                                         pixel->tile])
             (towerdefense.spawner :refer [describe-wave
                                           wave-time])
@@ -36,7 +37,7 @@
           (.fillText context (str letter level) (+ 2 x) (+ tile-size y)))))))
 
 (defn- draw-targets [context state]
-  (doseq [target (:targets state)]
+  (doseq [target (find-targets state)]
     (doseq [tile (:tiles target)]
       (let [x (* tile-size (first tile))
             y (* tile-size (second tile))]

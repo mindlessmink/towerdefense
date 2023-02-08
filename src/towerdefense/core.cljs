@@ -43,7 +43,6 @@
    :score 0
    :money 200
    :lives 20
-   :targets (hash-set)
    :path-map nil})
 
 (defn start-game [timestamp]

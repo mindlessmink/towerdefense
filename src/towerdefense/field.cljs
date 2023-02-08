@@ -10,6 +10,9 @@
 (defn in-target? [target tile]
   (contains? (:tiles target) tile))
 
+(defn find-targets [state]
+  [(get-in state [:spawner :target])])
+
 (defn tower-tiles [tower]
   (let [x (:x tower)
         y (:y tower)]
@@ -144,6 +147,6 @@
         old-blockmap (:old-blockmap state)]
     (if (or (nil? path-map) (not= old-blockmap blockmap))
       (assoc state
-             :path-map (make-path-map state (:tiles (first (:targets state))))
+             :path-map (make-path-map state (:tiles (first (find-targets state))))
              :old-blockmap blockmap)
       state)))

@@ -17,8 +17,7 @@
                                   target
                                   0
                                   []
-                                  nil))
-        (update :targets conj target))))
+                                  nil)))))
 
 (defn- random-pixel [tile]
   (let [[x y] tile]
