@@ -116,7 +116,7 @@
 (defn- move-bullets [state tick-seconds]
   (let [bullets (:bullets state)]
     (if (empty? bullets)
-      state
+      bullets
       (let [creeps (:creeps state)
             remaining-bullets (remove #(should-remove? % creeps) bullets)
             moved-bullets (mapv #(move-bullet % creeps tick-seconds)
