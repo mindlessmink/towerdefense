@@ -5,6 +5,7 @@
                                round])
             (towerdefense.field :refer [Target
                                         blocked?
+                                        distance
                                         find-path
                                         find-path-on-map
                                         in-target?
@@ -43,7 +44,7 @@
                              :group 4
                              :fast 8
                              :immune 4
-                             :flying 5
+                             :flying 4
                              :split 3
                              :dark 2})
 
@@ -66,12 +67,47 @@
    [(+ x (* dx dist)) y]
    [x y]])
 
+(defn- find-closest-tile [start-tile tiles]
+  (if (empty? tiles)
+    nil
+    (loop [closest-tile (first tiles)
+           closest-distance (distance start-tile closest-tile)
+           tiles (rest tiles)]
+      (if (empty? tiles)
+        closest-tile
+        (let [curr-tile (first tiles)
+              curr-distance (distance start-tile curr-tile)]
+          (recur (if (< curr-distance closest-distance) curr-tile closest-tile)
+                 (min curr-distance closest-distance)
+                 (rest tiles)))))))
+
+(defn- get-delta-flying [creep [tx ty]]
+  (let [[x y] (mapv floor (:coords creep))]
+    [(cond
+       (= x tx) 0
+       (< x tx) 1
+       :else -1)
+     (cond
+       (= y ty) 0
+       (< y tx) 1
+       :else -1)]))
+
+(defn- move-creep-flying [state creep tick-seconds]
+  (let [target (:target creep)
+        [x y] (:coords creep)
+        closest-tile (find-closest-tile (:coords creep) (:tiles target))
+        [dx dy] (get-delta-flying creep closest-tile)
+        dist (* tick-seconds (creep-speed creep))]
+    (assoc creep :coords [(+ x (* dx dist)) (+ y (* dy dist))])))
+
 (defn- move-creep [state path-map creep tick-seconds]
-  (let [coords (:coords creep)
-        dist (* (creep-speed creep) tick-seconds) ; how many pixels this moves
-        delta (get-delta state path-map creep)
-        possible-targets (remove #(blocked? state (mapv floor %)) (make-targets coords dist delta))]
-    (assoc creep :coords (first possible-targets))))
+  (if (= :flying (:creep-type creep))
+    (move-creep-flying state creep tick-seconds)
+    (let [coords (:coords creep)
+          dist (* (creep-speed creep) tick-seconds) ; how many pixels this moves
+          delta (get-delta state path-map creep)
+          possible-targets (remove #(blocked? state (mapv floor %)) (make-targets coords dist delta))]
+      (assoc creep :coords (first possible-targets)))))
 
 (defn- dead? [creep]
   (<= (:health creep) 0))

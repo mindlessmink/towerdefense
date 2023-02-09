@@ -1,5 +1,6 @@
 (ns towerdefense.field
-  (:require (cljs.math :refer [floor])))
+  (:require (cljs.math :refer [floor
+                               sqrt])))
 
 ;; Creeps try to reach their target.
 (defrecord Target [tiles])
@@ -157,3 +158,8 @@
              :path-maps (make-path-maps state)
              :old-blockmap blockmap)
       state)))
+
+(defn distance [[x1 y1] [x2 y2]]
+  (let [a (- x2 x1)
+        b (- y2 y1)]
+    (sqrt (+ (* a a) (* b b)))))

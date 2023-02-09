@@ -1,5 +1,6 @@
 (ns towerdefense.tower
-  (:require (cljs.math :refer [sqrt])))
+  (:require (cljs.math :refer [sqrt])
+            (towerdefense.field :refer [distance])))
 
 (defn- def-tower [stats & stat-defs]
   (loop [stat-maps []
@@ -80,11 +81,6 @@
 
 (defn- should-fire? [tower]
   (>= (:time-since-last-bullet tower) (tower-fire-rate tower)))
-
-(defn- distance [[x1 y1] [x2 y2]]
-  (let [a (- x2 x1)
-        b (- y2 y1)]
-    (sqrt (+ (* a a) (* b b)))))
 
 (defn- creeps-in-radius [tower creeps]
   (let [tower-coords [(inc (:x tower)) (inc (:y tower))]
