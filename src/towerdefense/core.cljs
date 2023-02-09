@@ -37,6 +37,7 @@
 
 (def initial-state
   {:frames-rendered 0
+   :walls (sorted-set)
    :towers (hash-map)
    :creeps (hash-map)
    :bullets []
@@ -45,8 +46,31 @@
    :lives 20
    :path-map nil})
 
+(defn- add-walls [state]
+  (let [spawner (:spawner state)
+        start-tiles (:start-area spawner)
+        target-tiles (get-in spawner [:target :tiles])
+        open-walls (apply conj
+                          (apply conj (sorted-set) start-tiles)
+                          target-tiles)
+        tiles (for [x (range 40)
+                    y (range 30)
+                    :when (or (= x 0)
+                              (= x 39)
+                              (= y 0)
+                              (= y 29))]
+                [x y])]
+    (assoc state
+           :walls
+           (reduce conj
+                   (sorted-set)
+                   (filterv (fn [tile]
+                              (not (contains? open-walls tile)))
+                            tiles)))))
+
 (defn start-game [timestamp]
-  (let [state (init-spawners initial-state)]
+  (let [state (-> (init-spawners initial-state)
+                  add-walls)]
     (.requestAnimationFrame js/window (frame-callback state timestamp))))
 
 (init-input)

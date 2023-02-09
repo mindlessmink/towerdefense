@@ -36,6 +36,15 @@
               level (:level tower)]
           (.fillText context (str letter level) (+ 2 x) (+ tile-size y)))))))
 
+(defn- draw-walls [context state]
+  (set! (.-fillStyle context) "#bbbbbb")
+  (doseq [[x y :as wall] (:walls state)]
+    (.fillRect context
+               (* x tile-size)
+               (* y tile-size)
+               tile-size
+               tile-size)))
+
 (defn- draw-targets [context state]
   (doseq [target (find-targets state)]
     (doseq [tile (:tiles target)]
@@ -133,6 +142,7 @@
     (set! (.-fillStyle context) "#ddddaa")
     (.fillRect context 0 0 640 480)
     (draw-towers context state)
+    (draw-walls context state)
     (draw-targets context state)
     (draw-creeps context state)
     (draw-bullets context state)
