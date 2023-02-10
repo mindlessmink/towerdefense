@@ -10,7 +10,9 @@
             (towerdefense.spawner :refer [describe-wave
                                           wave-time])
             (towerdefense.tower :refer [Tower
-                                        tower-build-cost])))
+                                        tower-build-cost
+                                        upgradeable?
+                                        upgrade-cost])))
 
 (def tile-size 16)
 (def tower-size (* 2 tile-size))
@@ -153,7 +155,11 @@
   (when-let [tower (get (:towers state) (:selected-tower state))]
     (.fillText context
                (str "Selected tower: " (name (:tower-type tower)))
-               0 100)))
+               0 100)
+    (when (upgradeable? tower)
+      (.fillText context
+                 (str "Upgrade cost: $" (upgrade-cost tower))
+                 0 120))))
 
 (defn- draw-wave-info [context state]
   (let [spawner (:spawner state)

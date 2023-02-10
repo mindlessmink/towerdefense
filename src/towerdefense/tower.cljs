@@ -63,6 +63,15 @@
 (defn tower-radius [tower]
   (tower-stat tower :radius))
 
+(defn upgradeable? [tower]
+  (< (:level tower) (count (:tower-def tower))))
+
+(defn upgrade-cost [tower]
+  (get-in (:tower-def tower) [(:level tower) :cost]))
+
+(defn upgrade-tower [tower]
+  (update tower :level inc))
+
 (defn- update-timers [towers tick-seconds]
   (reduce-kv (fn [m id tower]
                (assoc m id (update tower :time-since-last-bullet + tick-seconds)))

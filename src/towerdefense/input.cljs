@@ -9,7 +9,10 @@
             (towerdefense.tower :refer [Tower
                                         make-tower
                                         tower-build-cost
-                                        tower-cost])))
+                                        tower-cost
+                                        upgradeable?
+                                        upgrade-cost
+                                        upgrade-tower])))
 
 (def ^:private pressed-keys (atom []))
 
@@ -43,6 +46,20 @@
             (update :money + (floor (* (tower-cost tower) 0.8)))
             (dissoc :selected-tower))))))
 
+(defn- try-upgrade-tower [state]
+  (if-let [tower-id (:selected-tower state)]
+    (let [towers (:towers state)
+          tower (get towers tower-id)]
+      (if-not (upgradeable? tower)
+        state
+        (let [cost (upgrade-cost tower)]
+          (if (>= (:money state) cost)
+            (assoc state
+                   :towers (update towers tower-id upgrade-tower)
+                   :money (- (:money state) cost))
+            state))))
+    state))
+
 (defn- process-pressed-key [state keycode]
   (case keycode
     "1" (assoc state :tower-to-build :pellet)
@@ -51,6 +68,7 @@
     "m" (update state :money + 10000) ; for testing
     "n" (assoc-in state [:spawner :time-since-last-wave] 10000) ; ugly...
     "s" (try-sell-tower state)
+    "u" (try-upgrade-tower state)
     :else state))
 
 (defn- process-pressed-keys [state]
