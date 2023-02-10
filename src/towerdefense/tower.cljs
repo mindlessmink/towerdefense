@@ -1,19 +1,36 @@
 (ns towerdefense.tower
   (:require (cljs.math :refer [sqrt])))
 
+(defn- def-tower [stats & stat-defs]
+  (loop [stat-maps []
+         remaining-defs stat-defs]
+    (if (empty? remaining-defs)
+      stat-maps
+      (recur (conj stat-maps (zipmap stats (first remaining-defs)))
+             (rest remaining-defs)))))
+
 (def ^:private tower-defs
-  {:pellet {:cost 5
-            :fire-rate 1
-            :damage 5
-            :radius 5}
-   :squirt {:cost 15
-            :fire-rate 0.5
-            :damage 10
-            :radius 8}
-   :dart {:cost 20
-          :fire-rate 1.5
-          :damage 20
-          :radius 10}})
+  {:pellet (def-tower [:cost :fire-rate :damage :radius]
+             [5 1 5 5]
+             [10 1 10 5]
+             [20 1 20 5]
+             [40 1 40 5]
+             [80 1 80 5]
+             [160 2 400 15])
+   :squirt (def-tower [:cost :fire-rate :damage :radius]
+             [15 0.5 5 8]
+             [15 0.5 10 8]
+             [35 0.5 18 8]
+             [50 0.5 32 8]
+             [120 0.5 60 8]
+             [400 0.5 250 8])
+   :dart (def-tower [:cost :fire-rate :damage :radius]
+           [20 1.5 10 10]
+           [20 1.5 20 11]
+           [50 1.5 40 12]
+           [100 1.5 80 13]
+           [150 1.5 160 14]
+           [500 1.5 320 15])})
 
 (defrecord Tower [tower-type tower-def level x y time-since-last-bullet])
 
@@ -28,20 +45,23 @@
             y
             1000)))
 
-(defn tower-stat [tower-type stat]
-  (get-in tower-defs [tower-type stat]))
+(defn tower-stat [tower stat]
+  (get-in (:tower-def tower) [(dec (:level tower)) stat]))
 
-(defn tower-cost [tower-type]
-  (tower-stat tower-type :cost))
+(defn tower-build-cost [tower-type]
+  (get-in tower-defs [tower-type 0 :cost]))
 
-(defn tower-damage [tower-type]
-  (tower-stat tower-type :damage))
+(defn tower-cost [tower]
+  (tower-stat tower :cost))
 
-(defn tower-fire-rate [tower-type]
-  (tower-stat tower-type :fire-rate))
+(defn tower-damage [tower]
+  (tower-stat tower :damage))
 
-(defn tower-radius [tower-type]
-  (tower-stat tower-type :radius))
+(defn tower-fire-rate [tower]
+  (tower-stat tower :fire-rate))
+
+(defn tower-radius [tower]
+  (tower-stat tower :radius))
 
 (defn- update-timers [towers tick-seconds]
   (reduce-kv (fn [m id tower]
@@ -50,7 +70,7 @@
              towers))
 
 (defn- should-fire? [tower]
-  (>= (:time-since-last-bullet tower) (tower-fire-rate (:tower-type tower))))
+  (>= (:time-since-last-bullet tower) (tower-fire-rate tower)))
 
 (defn- distance [[x1 y1] [x2 y2]]
   (let [a (- x2 x1)
@@ -59,7 +79,7 @@
 
 (defn- creeps-in-radius [tower creeps]
   (let [tower-coords [(inc (:x tower)) (inc (:y tower))]
-        radius (tower-radius (:tower-type tower))]
+        radius (tower-radius tower)]
     (filter (fn [creep]
               (let [creep-coords (get-in creep [1 :coords])]
                 (<= (distance tower-coords creep-coords) radius)))
@@ -70,7 +90,7 @@
     (if (empty? targetable-creeps)
       nil
       (let [target (rand-nth targetable-creeps)] ; for now
-        (Bullet. (tower-damage (:tower-type tower))
+        (Bullet. (tower-damage tower)
                  (first target)
                  [(inc (:x tower)) (inc (:y tower))])))))
 

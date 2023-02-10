@@ -10,7 +10,7 @@
             (towerdefense.spawner :refer [describe-wave
                                           wave-time])
             (towerdefense.tower :refer [Tower
-                                        tower-cost])))
+                                        tower-build-cost])))
 
 (def tile-size 16)
 (def tower-size (* 2 tile-size))
@@ -185,7 +185,7 @@
                  (str "Selected tower: "
                       (name tower-to-build)
                       " ($"
-                      (tower-cost tower-to-build)
+                      (tower-build-cost tower-to-build)
                       ")")
                  0 80))
     (draw-selected-tower context state)

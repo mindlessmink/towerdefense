@@ -8,6 +8,7 @@
                                         tower-tiles])
             (towerdefense.tower :refer [Tower
                                         make-tower
+                                        tower-build-cost
                                         tower-cost])))
 
 (def ^:private pressed-keys (atom []))
@@ -39,7 +40,7 @@
       (let [tower (get (:towers state) selected-tower)]
         (-> state
             (update :towers dissoc selected-tower)
-            (update :money + (floor (* (tower-cost (:tower-type tower)) 0.8)))
+            (update :money + (floor (* (tower-cost tower) 0.8)))
             (dissoc :selected-tower))))))
 
 (defn- process-pressed-key [state keycode]
@@ -71,7 +72,7 @@
 (defn- try-build-tower [state]
   (let [[x y :as pos] (:mouse-pos state)
         tower-to-build (:tower-to-build state)
-        cost (tower-cost tower-to-build)
+        cost (tower-build-cost tower-to-build)
         money (:money state)]
     (if (or (nil? tower-to-build)
             (< money cost))
