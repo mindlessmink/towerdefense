@@ -33,16 +33,17 @@
     [(+ x (rand))
      (+ y (rand))]))
 
-(def ^:private wave-types [:flying :normal :normal :fast :normal :group :normal])
+(def ^:private wave-types [:flying :normal :fast :normal :group :normal :spawn])
 
 (defn- get-wave-by-num [wave-num]
   (let [creep-type (get wave-types (mod wave-num (count wave-types)))
         boss? (zero? (mod wave-num 8))
-        num-creeps (if-not boss?
-                     10
-                     (if (= creep-type :group)
-                       3
-                       1))]
+        num-creeps (cond
+                     boss? (if (= creep-type :group)
+                                   3
+                                   1)
+                     (= creep-type :spawn) 5
+                     :else 10)]
     (Wave. wave-num creep-type num-creeps boss? 1000000)))
 
 (defn describe-wave [wave-num]

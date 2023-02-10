@@ -98,9 +98,14 @@
 (defn- draw-creeps [context state]
   (doseq [creep-entry (:creeps state)]
     (let [creep (second creep-entry)
-          size (if (:boss? creep)
-                 (* tile-size 0.75)
-                 (* tile-size 0.5))
+          size (cond
+                 (:boss? creep) (* tile-size 0.75)
+                 (= :spawn (:creep-type creep)) (case (get creep :spawn-level 0)
+                                                  0 (* tile-size 0.5)
+                                                  1 (* tile-size 0.4)
+                                                  2 (* tile-size 0.3)
+                                                  (* tile-size 0.2))
+                 :else (* tile-size 0.5))
           [x y] (mapv #(* tile-size %) (:coords creep))]
       (set! (.-fillStyle context) (creep-color creep))
       (.beginPath context)

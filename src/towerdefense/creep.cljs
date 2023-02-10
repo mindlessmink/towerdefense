@@ -34,7 +34,7 @@
                              :fast "red"
                              :immune "fuchsia"
                              :flying "yellow"
-                             :split "lime"
+                             :spawn "lime"
                              :dark "black"})
 
 (defn creep-color [creep]
@@ -45,7 +45,7 @@
                              :fast 8
                              :immune 4
                              :flying 4
-                             :split 3
+                             :spawn 3
                              :dark 2})
 
 ;; Tiles per second
@@ -131,6 +131,39 @@
                                        tick-seconds)])
                         creeps)))))
 
+(defn- splitting-spawn? [creep]
+  (and (= :spawn (:creep-type creep))
+       (< (get creep :spawn-level 0) 2) ;; spawns split twice for now.
+       (<= (:health creep) 0)))
+
+(defn- random-coords-in-tile [[x y]]
+  (let [[floored-x floored-y] [(floor x) (floor y)]]
+    [(+ floored-x (rand)) (+ floored-y (rand))]))
+
+(defn- split-dead-spawns [state]
+  (let [creeps (:creeps state)
+        splitting-spawns (filter #(splitting-spawn? (second %)) creeps)]
+    (loop [new-creeps []
+           spawns splitting-spawns]
+      (if (empty? spawns)
+        (assoc state
+               :creeps
+               (apply conj creeps new-creeps))
+        (let [[id curr-spawn] (first spawns)
+              new-health (floor (/ (:max-health curr-spawn) 2))
+              new-level (inc (get curr-spawn :spawn-level 0))
+              new-spawn (assoc curr-spawn
+                               :health new-health
+                               :max-health new-health
+                               :value 0
+                               :spawn-level new-level
+                               :coords (random-coords-in-tile (:coords curr-spawn)))]
+          (recur (apply conj
+                        new-creeps
+                        [[(gensym "spawn-baby") new-spawn]
+                         [(gensym "spawn-baby") new-spawn]])
+                 (next spawns)))))))
+
 ;; Remove creeps that are at their target
 (defn- remove-creeps [state]
   (let [creeps (:creeps state)
@@ -151,4 +184,5 @@
   (let [tick-seconds (/ tick-time 1000)]
     (-> state
         (move-creeps tick-seconds)
+        split-dead-spawns
         remove-creeps)))
