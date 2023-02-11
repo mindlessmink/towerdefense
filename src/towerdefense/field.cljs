@@ -11,7 +11,7 @@
   (contains? (:tiles target) tile))
 
 (defn find-targets [state]
-  [(get-in state [:spawner :target])])
+  (mapv :target (:spawners state)))
 
 (defn tower-tiles [tower]
   (let [x (:x tower)
@@ -143,12 +143,17 @@
       '()
       (conj (find-path-on-map path-map next-tile) next-tile))))
 
-(defn maybe-update-path-map [state]
-  (let [path-map (:path-map state)
+(defn- make-path-maps [state]
+  (let [targets (find-targets state)
+        maps (map #(make-path-map state (:tiles %)) targets)]
+    (zipmap targets maps)))
+
+(defn maybe-update-path-maps [state]
+  (let [path-maps (:path-maps state)
         blockmap (make-blockmap state)
         old-blockmap (:old-blockmap state)]
-    (if (or (nil? path-map) (not= old-blockmap blockmap))
+    (if (or (nil? path-maps) (not= old-blockmap blockmap))
       (assoc state
-             :path-map (make-path-map state (:tiles (first (find-targets state))))
+             :path-maps (make-path-maps state)
              :old-blockmap blockmap)
       state)))

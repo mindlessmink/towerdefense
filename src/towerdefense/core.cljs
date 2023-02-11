@@ -6,7 +6,7 @@
                                         make-blockmap
                                         make-path-map
                                         make-target
-                                        maybe-update-path-map])
+                                        maybe-update-path-maps])
             (towerdefense.input :refer [init-input
                                         process-inputs])
             (towerdefense.render :refer [render-game])
@@ -21,7 +21,7 @@
   (let [tick-seconds (/ tick-time 1000)]
     (-> state
         process-inputs
-        maybe-update-path-map
+        maybe-update-path-maps
         (update-spawners tick-seconds)
         (update-towers tick-seconds)
         (update-bullets tick-seconds)
@@ -46,13 +46,17 @@
    :lives 20
    :path-map nil})
 
+(defn- spawner-tiles [spawner]
+  (let [start-tiles (:start-area spawner)
+        target-tiles (get-in spawner [:target :tiles])]
+    (reduce conj start-tiles target-tiles)))
+
 (defn- add-walls [state]
-  (let [spawner (:spawner state)
-        start-tiles (:start-area spawner)
-        target-tiles (get-in spawner [:target :tiles])
-        open-walls (apply conj
-                          (apply conj (sorted-set) start-tiles)
-                          target-tiles)
+  (let [spawner-tiles (map spawner-tiles (:spawners state))
+        open-walls (reduce (fn [coll tiles]
+                             (reduce conj coll tiles))
+                           (sorted-set)
+                           spawner-tiles)
         tiles (for [x (range 40)
                     y (range 30)
                     :when (or (= x 0)

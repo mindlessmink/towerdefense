@@ -156,7 +156,7 @@
                0 100)))
 
 (defn- draw-wave-info [context state]
-  (let [spawner (:spawner state)
+  (let [spawner (first (:spawners state))
         wave-num (:curr-wave-num spawner)
         next-wave (inc wave-num)]
     (if (zero? wave-num)
