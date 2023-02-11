@@ -82,8 +82,7 @@
 
 (defn- move-creeps [state tick-seconds]
   (let [creeps (:creeps state)
-        ;; FIXME: assumes all creeps have the same target
-        path-map (:path-map state)]
+        path-maps (:path-maps state)]
     (assoc state
            :creeps 
            (apply conj
@@ -91,7 +90,7 @@
                    (map (fn [creep]
                           [(first creep)
                            (move-creep state
-                                       path-map
+                                       (get path-maps (get-in creep [1 :target]))
                                        (second creep)
                                        tick-seconds)])
                         creeps)))))

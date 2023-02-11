@@ -10,14 +10,23 @@
 
 (defrecord Spawner [start-area target curr-wave-num waves time-since-last-wave])
 
+(def ^:private right-target (make-target [[39 13] [39 14] [39 15] [39 16]]))
+(def ^:private bottom-target (make-target [[18 29] [19 29] [20 29] [21 29]]))
+
+(def ^:private left-spawner (Spawner. [[0 13] [0 14] [0 15] [0 16]]
+                                      right-target
+                                      0
+                                      []
+                                      nil))
+
+(def ^:private top-spawner (Spawner. [[18 0] [19 0] [20 0] [21 0]]
+                                     bottom-target
+                                     0
+                                     []
+                                     nil))
+
 (defn init-spawners [state]
-  (let [target (make-target [[39 13] [39 14] [39 15] [39 16]])]
-    (-> state
-        (assoc :spawner (Spawner. [[0 13] [0 14] [0 15] [0 16]]
-                                  target
-                                  0
-                                  []
-                                  nil)))))
+  (assoc state :spawners [left-spawner top-spawner]))
 
 (defn- random-pixel [tile]
   (let [[x y] tile]
@@ -92,29 +101,34 @@
         filtered-waves (filterv #(> (:creeps-left %) 0) spawned-waves)]
     filtered-waves))
 
+(defn- make-creep-entry [creep]
+  [(gensym "creep") creep])
 
 (defn- maybe-spawn-creeps [state tick-seconds]
-  (let [spawner (:spawner state)
-        waves (:waves spawner)
-        old-creeps (:creeps state)
-        new-waves (map #(update % :time-since-last-spawn + tick-seconds)
-                       waves)
-        spawning-waves (filter should-spawn-creep? new-waves)
-        new-creeps (map #(creep-from-wave spawner %) spawning-waves)
-        updated-waves (update-waves new-waves)
-        new-spawner (assoc spawner :waves updated-waves)]
-    (-> state
-        (assoc :creeps (apply conj
-                              old-creeps
-                              (map (fn [creep]
-                                     [(gensym "creep")
-                                      creep])
-                                   new-creeps)))
-        (assoc :spawner new-spawner))))
+  (let [spawners (:spawners state)]
+    (loop [remaining-spawners spawners
+           updated-spawners []
+           new-creeps []]
+      (if (empty? remaining-spawners)
+        (assoc state
+               :creeps (reduce conj (:creeps state) new-creeps)
+               :spawners updated-spawners)
+        (let [spawner (first remaining-spawners)
+              waves (:waves spawner)
+              new-waves (map #(update % :time-since-last-spawn + tick-seconds)
+                             waves)
+              spawning-waves (filter should-spawn-creep? new-waves)
+              spawned-creeps (map #(creep-from-wave spawner %) spawning-waves)
+              updated-waves (update-waves new-waves)
+              new-spawner (assoc spawner :waves updated-waves)]
+          (recur (rest remaining-spawners)
+                 (conj updated-spawners new-spawner)
+                 (reduce conj
+                         new-creeps
+                         (map make-creep-entry spawned-creeps))))))))
 
 (defn update-spawners [state tick-seconds]
-  (let [spawner (:spawner state)
-        new-state (assoc state
-                         :spawner
-                         (maybe-spawn-new-wave spawner tick-seconds))]
+  (let [spawners (mapv #(maybe-spawn-new-wave % tick-seconds)
+                       (:spawners state))
+        new-state (assoc state :spawners spawners)]
     (maybe-spawn-creeps new-state tick-seconds)))

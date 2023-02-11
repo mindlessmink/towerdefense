@@ -4,7 +4,7 @@
   (:require (cljs.math :refer [floor
                                round])
             (towerdefense.field :refer [make-blockmap
-                                        maybe-update-path-map
+                                        maybe-update-path-maps
                                         tower-tiles])
             (towerdefense.tower :refer [Tower
                                         make-tower
@@ -60,13 +60,20 @@
             state))))
     state))
 
+(defn- start-spawners [state]
+  (assoc state
+         :spawners (mapv (fn [spawner]
+                           ;; ugly
+                           (assoc spawner :time-since-last-wave 10000))
+                         (:spawners state))))
+
 (defn- process-pressed-key [state keycode]
   (case keycode
     "1" (assoc state :tower-to-build :pellet)
     "2" (assoc state :tower-to-build :squirt)
     "3" (assoc state :tower-to-build :dart)
     "m" (update state :money + 10000) ; for testing
-    "n" (assoc-in state [:spawner :time-since-last-wave] 10000) ; ugly...
+    "n" (start-spawners state)
     "s" (try-sell-tower state)
     "u" (try-upgrade-tower state)
     :else state))
@@ -76,14 +83,21 @@
     (reset! pressed-keys [])
     (reduce process-pressed-key state old-keys)))
 
+(defn- path-maps-ok? [state]
+  (let [path-maps (:path-maps state)
+        spawners (:spawners state)]
+    (every? (fn [spawner]
+              (let [start-tiles (:start-area spawner)
+                    path-map (get path-maps (:target spawner))]
+                every? #(contains? path-map %) start-tiles))
+            spawners)))
+
 (defn- try-place-tower [tower cost state]
   (let [updated-state (-> state
                           (update :towers assoc (gensym "tower") tower)
                           (update :money - cost)
-                          maybe-update-path-map)
-        path-map (:path-map updated-state)
-        start-tiles (get-in state [:spawner :start-area])]
-    (if (every? #(contains? path-map %) start-tiles)
+                          maybe-update-path-maps)]
+    (if (path-maps-ok? updated-state)
       updated-state
       state)))
 
