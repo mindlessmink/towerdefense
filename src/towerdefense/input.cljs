@@ -89,7 +89,7 @@
     (every? (fn [spawner]
               (let [start-tiles (:start-area spawner)
                     path-map (get path-maps (:target spawner))]
-                every? #(contains? path-map %) start-tiles))
+                (every? #(contains? path-map %) start-tiles)))
             spawners)))
 
 (defn- try-place-tower [tower cost state]
