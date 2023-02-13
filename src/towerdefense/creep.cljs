@@ -157,11 +157,14 @@
                                :max-health new-health
                                :value 0
                                :spawn-level new-level
-                               :coords (random-coords-in-tile (:coords curr-spawn)))]
+                               :coords (random-coords-in-tile (:coords curr-spawn)))
+              ; second baby is spawned in a different spot but otherwise identical
+              new-spawn-2 (assoc new-spawn
+                                 :coords (random-coords-in-tile (:coords curr-spawn)))]
           (recur (apply conj
                         new-creeps
                         [[(gensym "spawn-baby") new-spawn]
-                         [(gensym "spawn-baby") new-spawn]])
+                         [(gensym "spawn-baby") new-spawn-2]])
                  (next spawns)))))))
 
 ;; Remove creeps that are at their target
