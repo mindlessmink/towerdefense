@@ -139,7 +139,7 @@
 (defn- splitting-spawn? [creep]
   (and (= :spawn (:creep-type creep))
        (< (get creep :spawn-level 0) 2) ;; spawns split twice for now.
-       (<= (:health creep) 0)))
+       (dead? creep)))
 
 (defn- random-coords-in-tile [[x y]]
   (let [[floored-x floored-y] [(floor x) (floor y)]]
