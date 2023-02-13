@@ -188,9 +188,8 @@
         (update :creeps (fn [creeps]
                           (apply dissoc creeps (map first finished-creeps)))))))
 
-(defn update-creeps [state tick-time]
-  (let [tick-seconds (/ tick-time 1000)]
-    (-> state
-        (move-creeps tick-seconds)
-        split-dead-spawns
-        remove-creeps)))
+(defn update-creeps [state tick-seconds]
+  (-> state
+      (move-creeps tick-seconds)
+      split-dead-spawns
+      remove-creeps))

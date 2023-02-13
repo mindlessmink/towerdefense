@@ -25,7 +25,7 @@
         (update-spawners tick-seconds)
         (update-towers tick-seconds)
         (update-bullets tick-seconds)
-        (update-creeps tick-time)
+        (update-creeps tick-seconds)
         (update :frames-rendered inc))))
 
 (defn frame-callback [state old-timestamp]
