@@ -45,9 +45,9 @@
 (defn pixel->tile [[x y]]
   [(floor (/ x 16)) (floor (/ y 16))])
 
-(defn- in-game-area? [tile]
-  (and (<= 0 (first tile) 39)
-       (<= 0 (second tile) 29)))
+(defn- in-game-area? [[x y]]
+  (and (<= 0 x 39)
+       (<= 0 y 29)))
 
 (defn- find-neighbors [tile]
   (map (fn [x]
