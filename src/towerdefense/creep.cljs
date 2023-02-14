@@ -89,7 +89,7 @@
        :else -1)
      (cond
        (= y ty) 0
-       (< y tx) 1
+       (< y ty) 1
        :else -1)]))
 
 (defn- move-creep-flying [state creep tick-seconds]
