@@ -17,6 +17,11 @@
 (def tile-size 16)
 (def tower-size (* 2 tile-size))
 
+(defn- draw-circle [context x y radius]
+  (.beginPath context)
+  (.arc context x y radius 0 (* 2 PI) true)
+  (.fill context))
+
 (defn- get-2d-context [canvas-name]
   (.getContext (.getElementById js/document canvas-name) "2d"))
 
@@ -95,43 +100,29 @@
                (* 16 ratio)
                2)))
 
+(defn- creep-size [creep]
+  (cond
+    (:boss? creep) (* tile-size 0.75)
+    (= :spawn (:creep-type creep)) (case (get creep :spawn-level 0)
+                                     0 (* tile-size 0.5)
+                                     1 (* tile-size 0.4)
+                                     2 (* tile-size 0.3)
+                                     (* tile-size 0.2))
+    :else (* tile-size 0.5)))
+
 (defn- draw-creeps [context state]
-  (doseq [creep-entry (:creeps state)]
-    (let [creep (second creep-entry)
-          size (cond
-                 (:boss? creep) (* tile-size 0.75)
-                 (= :spawn (:creep-type creep)) (case (get creep :spawn-level 0)
-                                                  0 (* tile-size 0.5)
-                                                  1 (* tile-size 0.4)
-                                                  2 (* tile-size 0.3)
-                                                  (* tile-size 0.2))
-                 :else (* tile-size 0.5))
+  (doseq [[id creep] (:creeps state)]
+    (let [size (creep-size creep)
           [x y] (mapv #(* tile-size %) (:coords creep))]
       (set! (.-fillStyle context) (creep-color creep))
-      (.beginPath context)
-      (.arc context
-            x
-            y
-            size
-            0
-            (* 2 PI)
-            true)
-      (.fill context)
+      (draw-circle context x y size)
       (draw-creep-health-bar context creep))))
 
 (defn- draw-bullets [context state]
   (doseq [bullet (:bullets state)]
     (let [[x y] (mapv #(* tile-size %) (:coords bullet))]
       (set! (.-fillStyle context) "blue")
-      (.beginPath context)
-      (.arc context
-            x
-            y
-            2
-            0
-            (* 2 PI)
-            true)
-      (.fill context))))
+      (draw-circle context x y 2))))
 
 (defn- draw-tower-to-build [context state]
   (when (:tower-to-build state)

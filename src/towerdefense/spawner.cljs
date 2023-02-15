@@ -29,9 +29,7 @@
   (assoc state :spawners [left-spawner top-spawner]))
 
 (defn- random-pixel [tile]
-  (let [[x y] tile]
-    [(+ x (rand))
-     (+ y (rand))]))
+  (mapv #(+ % (rand)) tile))
 
 (def ^:private wave-types [:flying :normal :fast :normal :group :normal :spawn])
 

@@ -3,12 +3,7 @@
             (towerdefense.field :refer [distance])))
 
 (defn- def-tower [stats & stat-defs]
-  (loop [stat-maps []
-         remaining-defs stat-defs]
-    (if (empty? remaining-defs)
-      stat-maps
-      (recur (conj stat-maps (zipmap stats (first remaining-defs)))
-             (rest remaining-defs)))))
+  (mapv (partial zipmap stats) stat-defs))
 
 (def ^:private tower-defs
   {:pellet (def-tower [:cost :fire-rate :damage :radius]

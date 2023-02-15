@@ -7,11 +7,11 @@
                                         make-path-map
                                         make-target
                                         maybe-update-path-maps])
+            (towerdefense.init :refer [make-initial-state])
             (towerdefense.input :refer [init-input
                                         process-inputs])
             (towerdefense.render :refer [render-game])
-            (towerdefense.spawner :refer [init-spawners
-                                          update-spawners])
+            (towerdefense.spawner :refer [update-spawners])
             (towerdefense.tower :refer [Tower
                                         make-tower
                                         update-bullets
@@ -25,7 +25,7 @@
         (update-spawners tick-seconds)
         (update-towers tick-seconds)
         (update-bullets tick-seconds)
-        (update-creeps tick-time)
+        (update-creeps tick-seconds)
         (update :frames-rendered inc))))
 
 (defn frame-callback [state old-timestamp]
@@ -35,47 +35,9 @@
       (.requestAnimationFrame js/window
                               (frame-callback new-state new-timestamp)))))
 
-(def initial-state
-  {:frames-rendered 0
-   :walls (sorted-set)
-   :towers (hash-map)
-   :creeps (hash-map)
-   :bullets []
-   :score 0
-   :money 200
-   :lives 20
-   :path-map nil})
-
-(defn- spawner-tiles [spawner]
-  (let [start-tiles (:start-area spawner)
-        target-tiles (get-in spawner [:target :tiles])]
-    (reduce conj start-tiles target-tiles)))
-
-(defn- add-walls [state]
-  (let [spawner-tiles (map spawner-tiles (:spawners state))
-        open-walls (reduce (fn [coll tiles]
-                             (reduce conj coll tiles))
-                           (sorted-set)
-                           spawner-tiles)
-        tiles (for [x (range 40)
-                    y (range 30)
-                    :when (or (= x 0)
-                              (= x 39)
-                              (= y 0)
-                              (= y 29))]
-                [x y])]
-    (assoc state
-           :walls
-           (reduce conj
-                   (sorted-set)
-                   (filterv (fn [tile]
-                              (not (contains? open-walls tile)))
-                            tiles)))))
-
 (defn start-game [timestamp]
-  (let [state (-> (init-spawners initial-state)
-                  add-walls)]
-    (.requestAnimationFrame js/window (frame-callback state timestamp))))
+    (.requestAnimationFrame js/window (frame-callback (make-initial-state)
+                                                      timestamp)))
 
 (init-input)
 (.requestAnimationFrame js/window start-game)

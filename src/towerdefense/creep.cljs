@@ -29,6 +29,11 @@
             coords
             target)))
 
+(defn creep-tile
+  "Returns the tile the creep is on"
+  [creep]
+  (mapv floor (:coords creep)))
+
 (def ^:private creep-colors {:normal "silver"
                              :group "blue"
                              :fast "red"
@@ -56,7 +61,7 @@
       base-speed)))
 
 (defn- get-delta [state path-map creep]
-  (let [[x y :as coords] (mapv floor (:coords creep))
+  (let [[x y :as coords] (creep-tile creep)
         path (find-path-on-map path-map coords)
         [nx ny] (first path)]
     [(- nx x) (- ny y)]))
@@ -82,7 +87,7 @@
                  (rest tiles)))))))
 
 (defn- get-delta-flying [creep [tx ty]]
-  (let [[x y] (mapv floor (:coords creep))]
+  (let [[x y] (creep-tile creep)]
     [(cond
        (= x tx) 0
        (< x tx) 1
@@ -113,7 +118,7 @@
   (<= (:health creep) 0))
 
 (defn- finished? [creep]
-  (and (in-target? (:target creep) (mapv floor (:coords creep)))
+  (and (in-target? (:target creep) (creep-tile creep))
        (not (dead? creep))))
 
 (defn- move-creeps [state tick-seconds]
@@ -134,7 +139,7 @@
 (defn- splitting-spawn? [creep]
   (and (= :spawn (:creep-type creep))
        (< (get creep :spawn-level 0) 2) ;; spawns split twice for now.
-       (<= (:health creep) 0)))
+       (dead? creep)))
 
 (defn- random-coords-in-tile [[x y]]
   (let [[floored-x floored-y] [(floor x) (floor y)]]
@@ -183,9 +188,8 @@
         (update :creeps (fn [creeps]
                           (apply dissoc creeps (map first finished-creeps)))))))
 
-(defn update-creeps [state tick-time]
-  (let [tick-seconds (/ tick-time 1000)]
-    (-> state
-        (move-creeps tick-seconds)
-        split-dead-spawns
-        remove-creeps)))
+(defn update-creeps [state tick-seconds]
+  (-> state
+      (move-creeps tick-seconds)
+      split-dead-spawns
+      remove-creeps))
