@@ -1,5 +1,6 @@
 (ns towerdefense.field
-  (:require (cljs.math :refer [floor
+  (:require (clojure.set :refer [union])
+            (cljs.math :refer [floor
                                sqrt])))
 
 ;; Creeps try to reach their target.
@@ -22,12 +23,8 @@
               [x (inc y)]
               [(inc x) (inc y)])))
 
-;; Clojurescript doesn't have union??
-(defn merge-sets [a b]
-  (reduce conj a b))
-
 (defn- make-tower-blockmap [towers]
-  (reduce merge-sets (hash-set) (map tower-tiles towers)))
+  (reduce union (hash-set) (map tower-tiles towers)))
 
 ;; debugging...
 (defn- tile-str [tile]
@@ -127,7 +124,7 @@
         path-map
         (let [neighbors (remove (fn [[nbr next-tile]]
                                   (contains? path-map nbr))
-                                (reduce merge-sets
+                                (reduce union
                                         (hash-set)
                                         (map (fn [tile]
                                                (apply hash-set
