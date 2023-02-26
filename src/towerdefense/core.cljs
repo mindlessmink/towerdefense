@@ -1,5 +1,5 @@
 (ns towerdefense.core
-  (:require (towerdefense.bullet :refer [update-bullets])
+  (:require (towerdefense.projectile :refer [update-projectiles])
             (towerdefense.creep :refer [Creep
                                         make-creep
                                         update-creeps])
@@ -24,7 +24,7 @@
         maybe-update-path-maps
         (update-spawners tick-seconds)
         (update-towers tick-seconds)
-        (update-bullets tick-seconds)
+        (update-projectiles tick-seconds)
         (update-creeps tick-seconds)
         (update :frames-rendered inc))))
 

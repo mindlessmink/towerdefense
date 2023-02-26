@@ -6,7 +6,7 @@
    :walls (sorted-set)
    :towers (hash-map)
    :creeps (hash-map)
-   :bullets []
+   :projectiles []
    :score 0
    :money 200
    :lives 20

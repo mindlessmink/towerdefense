@@ -1,6 +1,6 @@
 (ns towerdefense.tower
   (:require (cljs.math :refer [sqrt])
-            (towerdefense.bullet :refer [Bullet])
+            (towerdefense.projectile :refer [Projectile])
             (towerdefense.field :refer [distance])))
 
 (defn- def-tower [stats & stat-defs]
@@ -29,7 +29,7 @@
            [150 1.5 160 14]
            [500 1.5 320 15])})
 
-(defrecord Tower [tower-type tower-def level x y time-since-last-bullet])
+(defrecord Tower [tower-type tower-def level x y time-since-last-shot])
 
 (defn make-tower [tower-type level x y]
   (if-let [tower-def (get tower-defs tower-type)]
@@ -69,12 +69,12 @@
 
 (defn- update-timers [towers tick-seconds]
   (reduce-kv (fn [m id tower]
-               (assoc m id (update tower :time-since-last-bullet + tick-seconds)))
+               (assoc m id (update tower :time-since-last-shot + tick-seconds)))
              (hash-map)
              towers))
 
 (defn- should-fire? [tower]
-  (>= (:time-since-last-bullet tower) (tower-fire-rate tower)))
+  (>= (:time-since-last-shot tower) (tower-fire-rate tower)))
 
 (defn- creeps-in-radius [tower creeps]
   (let [tower-coords [(inc (:x tower)) (inc (:y tower))]
@@ -84,14 +84,14 @@
                 (<= (distance tower-coords creep-coords) radius)))
             creeps)))
 
-(defn- bullet-from-tower [tower creeps]
+(defn- projectile-from-tower [tower creeps]
   (let [targetable-creeps (creeps-in-radius tower creeps)]
     (if (empty? targetable-creeps)
       nil
       (let [target (rand-nth targetable-creeps)] ; for now
-        (Bullet. (tower-damage tower)
-                 (first target)
-                 [(inc (:x tower)) (inc (:y tower))])))))
+        (Projectile. (tower-damage tower)
+                     (first target)
+                     [(inc (:x tower)) (inc (:y tower))])))))
 
 (defn update-towers [state tick-seconds]
   (let [towers (:towers state)
@@ -102,13 +102,13 @@
       (let [firing-towers (filter #(should-fire? (second %)) updated-timers)
             fired-towers (map (fn [[id tower]]
                                 (if (should-fire? tower)
-                                  [id (assoc tower :time-since-last-bullet 0)]
+                                  [id (assoc tower :time-since-last-shot 0)]
                                   [id tower]))
                               updated-timers)
-            bullets (filterv (complement nil?)
-                             (map #(bullet-from-tower % creeps)
-                                  (map second firing-towers)))]
+            projectiles (filterv (complement nil?)
+                                 (map #(projectile-from-tower % creeps)
+                                      (map second firing-towers)))]
         (-> state
             (assoc :towers (reduce conj (hash-map) fired-towers))
-            (update :bullets (fn [old-bullets]
-                               (apply conj old-bullets bullets))))))))
+            (update :projectiles (fn [old-projectiles]
+                                   (apply conj old-projectiles projectiles))))))))

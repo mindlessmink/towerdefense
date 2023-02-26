@@ -118,9 +118,9 @@
       (draw-circle context x y size)
       (draw-creep-health-bar context creep))))
 
-(defn- draw-bullets [context state]
-  (doseq [bullet (:bullets state)]
-    (let [[x y] (mapv #(* tile-size %) (:coords bullet))]
+(defn- draw-projectiles [context state]
+  (doseq [projectile (:projectiles state)]
+    (let [[x y] (mapv #(* tile-size %) (:coords projectile))]
       (set! (.-fillStyle context) "blue")
       (draw-circle context x y 2))))
 
@@ -143,7 +143,7 @@
     (draw-walls context state)
     (draw-targets context state)
     (draw-creeps context state)
-    (draw-bullets context state)
+    (draw-projectiles context state)
     ; (draw-path-map context state)
     (draw-tower-to-build context state)))
 
