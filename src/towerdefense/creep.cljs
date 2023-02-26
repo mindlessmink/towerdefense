@@ -193,3 +193,9 @@
       (move-creeps tick-seconds)
       split-dead-spawns
       remove-creeps))
+
+(defn creeps-in-radius [coords radius creeps]
+  (filter (fn [creep]
+            (let [creep-coords (get-in creep [1 :coords])]
+              (<= (distance coords creep-coords) radius)))
+          creeps))

@@ -1,7 +1,14 @@
 (ns towerdefense.projectile
-  (:require (towerdefense.field :refer [distance])))
+  (:require (towerdefense.creep :refer [creeps-in-radius])
+            (towerdefense.field :refer [distance])))
 
-(defrecord Projectile [damage target coords])
+(defprotocol Projectile
+  (hits? [projectile creeps])
+  (hit [projectile creeps]))
+
+(defrecord Bullet [damage target coords])
+
+(defrecord Dart [damage radius target coords])
 
 (def ^:private projectile-speed 15)
 
@@ -32,25 +39,37 @@
                                 remaining-projectiles)]
         moved-projectiles))))
 
-(defn- hits-target? [projectile creeps]
-  (let [target (get creeps (:target projectile))]
-    (< (distance (:coords projectile) (:coords target)) 1)))
+(extend-type Bullet
+  Projectile
+  (hits? [bullet creeps]
+    (let [target (get creeps (:target bullet))]
+      (< (distance (:coords bullet) (:coords target)) 1)))
+  (hit [bullet creeps]
+    (update creeps (:target bullet) #(update % :health - (:damage bullet)))))
+
+(extend-type Dart
+  Projectile
+  (hits? [dart creeps]
+    (let [target (get creeps (:target dart))]
+      (< (distance (:coords dart) (:coords target)) 1)))
+  (hit [dart creeps]
+    (let [targets (creeps-in-radius (:coords dart) (:radius dart) creeps)]
+      (reduce (fn [creeps [id _]]
+                (update creeps id #(update % :health - (:damage dart))))
+              creeps
+              targets))))
 
 (defn update-projectiles [state tick-seconds]
   (let [moved-projectiles (move-projectiles state tick-seconds)
         creeps (:creeps state)
-        hitting-projectiles (filter #(hits-target? % creeps) moved-projectiles)
-        remaining-projectiles (filterv #(not (hits-target? % creeps)) moved-projectiles)]
+        hitting-projectiles (filter #(hits? % creeps) moved-projectiles)
+        remaining-projectiles (filterv #(not (hits? % creeps)) moved-projectiles)]
     (loop [projectiles hitting-projectiles
            updated-creeps creeps]
       (if (empty? projectiles)
         (-> state
             (assoc :projectiles remaining-projectiles)
             (assoc :creeps updated-creeps))
-        (let [curr-projectile (first projectiles)
-              target-id (:target curr-projectile)]
+        (let [curr-projectile (first projectiles)]
           (recur (rest projectiles)
-                 (update creeps
-                         target-id
-                         (fn [creep]
-                           (update creep :health - (:damage curr-projectile))))))))))
+                 (hit curr-projectile creeps)))))))

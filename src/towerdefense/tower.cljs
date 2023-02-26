@@ -1,7 +1,10 @@
 (ns towerdefense.tower
   (:require (cljs.math :refer [sqrt])
-            (towerdefense.projectile :refer [Projectile])
-            (towerdefense.field :refer [distance])))
+            (towerdefense.creep :refer [creeps-in-radius])
+            (towerdefense.field :refer [distance])
+            (towerdefense.projectile :refer [Bullet
+                                             Dart
+                                             Projectile])))
 
 (defn- def-tower [stats & stat-defs]
   (mapv (partial zipmap stats) stat-defs))
@@ -21,13 +24,13 @@
              [50 0.5 32 8]
              [120 0.5 60 8]
              [400 0.5 250 8])
-   :dart (def-tower [:cost :fire-rate :damage :radius]
-           [20 1.5 10 10]
-           [20 1.5 20 11]
-           [50 1.5 40 12]
-           [100 1.5 80 13]
-           [150 1.5 160 14]
-           [500 1.5 320 15])})
+   :dart (def-tower [:cost :fire-rate :damage :dart-radius :radius]
+           [20 1.5 10 1 10]
+           [20 1.5 20 1 11]
+           [50 1.5 40 1 12]
+           [100 1.5 80 1 13]
+           [150 1.5 160 1 14]
+           [500 1.5 320 1.5 15])})
 
 (defrecord Tower [tower-type tower-def level x y time-since-last-shot])
 
@@ -51,6 +54,9 @@
 
 (defn tower-damage [tower]
   (tower-stat tower :damage))
+
+(defn tower-dart-radius [tower]
+  (tower-stat tower :dart-radius))
 
 (defn tower-fire-rate [tower]
   (tower-stat tower :fire-rate))
@@ -76,22 +82,22 @@
 (defn- should-fire? [tower]
   (>= (:time-since-last-shot tower) (tower-fire-rate tower)))
 
-(defn- creeps-in-radius [tower creeps]
-  (let [tower-coords [(inc (:x tower)) (inc (:y tower))]
-        radius (tower-radius tower)]
-    (filter (fn [creep]
-              (let [creep-coords (get-in creep [1 :coords])]
-                (<= (distance tower-coords creep-coords) radius)))
-            creeps)))
+(defn- available-targets [tower creeps]
+  (creeps-in-radius [(inc (:x tower)) (inc (:y tower))] (tower-radius tower) creeps))
 
 (defn- projectile-from-tower [tower creeps]
-  (let [targetable-creeps (creeps-in-radius tower creeps)]
+  (let [targetable-creeps (available-targets tower creeps)]
     (if (empty? targetable-creeps)
       nil
       (let [target (rand-nth targetable-creeps)] ; for now
-        (Projectile. (tower-damage tower)
-                     (first target)
-                     [(inc (:x tower)) (inc (:y tower))])))))
+        (case (:tower-type tower)
+          :dart (Dart. (tower-damage tower)
+                       (tower-dart-radius tower)
+                       (first target)
+                       [(inc (:x tower)) (inc (:y tower))])
+          (Bullet. (tower-damage tower)
+                   (first target)
+                   [(inc (:x tower)) (inc (:y tower))]))))))
 
 (defn update-towers [state tick-seconds]
   (let [towers (:towers state)
