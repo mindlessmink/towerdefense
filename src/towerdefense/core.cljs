@@ -1,5 +1,6 @@
 (ns towerdefense.core
-  (:require (towerdefense.creep :refer [Creep
+  (:require (towerdefense.bullet :refer [update-bullets])
+            (towerdefense.creep :refer [Creep
                                         make-creep
                                         update-creeps])
             (towerdefense.field :refer [Target
@@ -14,7 +15,6 @@
             (towerdefense.spawner :refer [update-spawners])
             (towerdefense.tower :refer [Tower
                                         make-tower
-                                        update-bullets
                                         update-towers])))
 
 (defn update-state [state tick-time]
