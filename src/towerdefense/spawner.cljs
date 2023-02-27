@@ -31,7 +31,7 @@
 (defn- random-pixel [tile]
   (mapv #(+ % (rand)) tile))
 
-(def ^:private wave-types [:flying :normal :fast :immune :group :normal :spawn])
+(def ^:private wave-types [:flying :normal :fast :immune :group :spawn :dark])
 
 (defn- get-wave-by-num [wave-num]
   (let [creep-type (get wave-types (mod wave-num (count wave-types)))

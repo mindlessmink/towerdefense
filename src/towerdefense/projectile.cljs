@@ -1,5 +1,6 @@
 (ns towerdefense.projectile
-  (:require (towerdefense.creep :refer [creeps-in-radius])
+  (:require (towerdefense.creep :refer [creeps-in-radius
+                                        damage-creep])
             (towerdefense.field :refer [distance])))
 
 (defprotocol Projectile
@@ -47,7 +48,7 @@
     (let [target (get creeps (:target bullet))]
       (< (distance (:coords bullet) (:coords target)) 1)))
   (hit [bullet creeps]
-    (update creeps (:target bullet) #(update % :health - (:damage bullet)))))
+    (update creeps (:target bullet) #(damage-creep % (:damage bullet)))))
 
 (extend-type Dart
   Projectile
@@ -57,7 +58,7 @@
   (hit [dart creeps]
     (let [targets (creeps-in-radius (:coords dart) (:radius dart) creeps)]
       (reduce (fn [creeps [id _]]
-                (update creeps id #(update % :health - (:damage dart))))
+                (update creeps id #(damage-creep % (:damage dart))))
               creeps
               targets))))
 
@@ -69,7 +70,7 @@
   (hit [bullet creeps]
     (let [id (:target bullet)
           creep (get creeps id)
-          damaged-creep (update creep :health - (:damage bullet))
+          damaged-creep (damage-creep creep (:damage bullet))
           frosted-creep (if (= :immune (:creep-type creep))
                           damaged-creep
                           (assoc damaged-creep :frosted (:duration bullet)))]

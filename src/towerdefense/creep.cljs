@@ -12,7 +12,7 @@
                                         make-path-map
                                         pixel->tile])))
 
-(defrecord Creep [creep-type health max-health value boss? coords target])
+(defrecord Creep [creep-type health max-health wave value boss? coords target])
 
 (defn make-creep [creep-type wave boss? coords target]
   (let [health (if boss?
@@ -24,6 +24,7 @@
     (Creep. creep-type
             health
             health
+            wave
             value
             boss?
             coords
@@ -62,6 +63,14 @@
     (if (:frosted creep)
       (* speed 0.5)
       speed)))
+
+(defn creep-armor [creep]
+  (if-not (= :dark (:creep-type creep))
+    0
+    (* 5 (inc (floor (/ (:wave creep) 10))))))
+
+(defn damage-creep [creep damage]
+  (update creep :health - (max 1 (- damage (creep-armor creep)))))
 
 (defn- get-delta [state path-map creep]
   (let [[x y :as coords] (creep-tile creep)
