@@ -55,10 +55,13 @@
 
 ;; Tiles per second
 (defn- creep-speed [creep]
-  (let [base-speed (get creep-speeds (:creep-type creep) 4)]
-    (if (:boss? creep)
-      (* base-speed 0.8)
-      base-speed)))
+  (let [base-speed (get creep-speeds (:creep-type creep) 4)
+        speed (if (:boss? creep)
+                (* base-speed 0.8)
+                base-speed)]
+    (if (:frosted creep)
+      (* speed 0.5)
+      speed)))
 
 (defn- get-delta [state path-map creep]
   (let [[x y :as coords] (creep-tile creep)
@@ -172,6 +175,20 @@
                          [(gensym "spawn-baby") new-spawn-2]])
                  (next spawns)))))))
 
+(defn- update-frost-timers [state tick-seconds]
+  (let [creeps (:creeps state)
+        updated-creeps (reduce (fn [coll [id creep]]
+                                 (let [updated-creep (if-let [frost-timer (:frosted creep)]
+                                                       (let [new-timer (- frost-timer tick-seconds)]
+                                                         (if (pos? new-timer)
+                                                           (assoc creep :frosted new-timer)
+                                                           (dissoc creep :frosted)))
+                                                       creep)]
+                                   (assoc coll id updated-creep)))
+                               creeps
+                               creeps)]
+    (assoc state :creeps updated-creeps)))
+                                      
 ;; Remove creeps that are at their target
 (defn- remove-creeps [state]
   (let [creeps (:creeps state)
@@ -192,6 +209,7 @@
   (-> state
       (move-creeps tick-seconds)
       split-dead-spawns
+      (update-frost-timers tick-seconds)
       remove-creeps))
 
 (defn creeps-in-radius [coords radius creeps]

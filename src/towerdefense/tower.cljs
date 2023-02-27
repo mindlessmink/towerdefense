@@ -4,6 +4,7 @@
             (towerdefense.field :refer [distance])
             (towerdefense.projectile :refer [Bullet
                                              Dart
+                                             FrostBullet
                                              Projectile])))
 
 (defn- def-tower [stats & stat-defs]
@@ -30,7 +31,14 @@
            [50 1.5 40 1 12]
            [100 1.5 80 1 13]
            [150 1.5 160 1 14]
-           [500 1.5 320 1.5 15])})
+           [500 1.5 320 1.5 15])
+   :frost (def-tower [:cost :fire-rate :damage :frost-duration :radius]
+            [50 1 5 2.0 8]
+            [50 1 10 3.5 8]
+            [50 1 15 5.0 8]
+            [50 1 20 6.5 8]
+            [50 1 25 8.0 8]
+            [150 1 30 12.0 10])})
 
 (defrecord Tower [tower-type tower-def level x y time-since-last-shot])
 
@@ -57,6 +65,9 @@
 
 (defn tower-dart-radius [tower]
   (tower-stat tower :dart-radius))
+
+(defn tower-frost-duration [tower]
+  (tower-stat tower :frost-duration))
 
 (defn tower-fire-rate [tower]
   (tower-stat tower :fire-rate))
@@ -95,6 +106,10 @@
                        (tower-dart-radius tower)
                        (first target)
                        [(inc (:x tower)) (inc (:y tower))])
+          :frost (FrostBullet. (tower-damage tower)
+                               (tower-frost-duration tower)
+                               (first target)
+                               [(inc (:x tower)) (inc (:y tower))])
           (Bullet. (tower-damage tower)
                    (first target)
                    [(inc (:x tower)) (inc (:y tower))]))))))

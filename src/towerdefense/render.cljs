@@ -114,6 +114,9 @@
   (doseq [[id creep] (:creeps state)]
     (let [size (creep-size creep)
           [x y] (mapv #(* tile-size %) (:coords creep))]
+      (when (:frosted creep)
+        (set! (.-fillStyle context) "#00dddd")
+        (draw-circle context x y (+ 2 size)))
       (set! (.-fillStyle context) (creep-color creep))
       (draw-circle context x y size)
       (draw-creep-health-bar context creep))))

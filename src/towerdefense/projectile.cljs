@@ -10,6 +10,8 @@
 
 (defrecord Dart [damage radius target coords])
 
+(defrecord FrostBullet [damage duration target coords])
+
 (def ^:private projectile-speed 15)
 
 (defn movement-vector [[x1 y1] [x2 y2]]
@@ -58,6 +60,18 @@
                 (update creeps id #(update % :health - (:damage dart))))
               creeps
               targets))))
+
+(extend-type FrostBullet
+  Projectile
+  (hits? [bullet creeps]
+    (let [target (get creeps (:target bullet))]
+      (< (distance (:coords bullet) (:coords target)) 1)))
+  (hit [bullet creeps]
+    (let [id (:target bullet)
+          creep (get creeps id)
+          damaged-creep (update creep :health - (:damage bullet))
+          frosted-creep (assoc damaged-creep :frosted (:duration bullet))]
+      (assoc creeps id frosted-creep))))
 
 (defn update-projectiles [state tick-seconds]
   (let [moved-projectiles (move-projectiles state tick-seconds)
