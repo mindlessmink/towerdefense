@@ -70,7 +70,9 @@
     (let [id (:target bullet)
           creep (get creeps id)
           damaged-creep (update creep :health - (:damage bullet))
-          frosted-creep (assoc damaged-creep :frosted (:duration bullet))]
+          frosted-creep (if (= :immune (:creep-type creep))
+                          damaged-creep
+                          (assoc damaged-creep :frosted (:duration bullet)))]
       (assoc creeps id frosted-creep))))
 
 (defn update-projectiles [state tick-seconds]
