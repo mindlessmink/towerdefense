@@ -11,6 +11,8 @@
                                           wave-time])
             (towerdefense.tower :refer [Tower
                                         tower-build-cost
+                                        tower-radius
+                                        tower-radius-by-type
                                         upgradeable?
                                         upgrade-cost])))
 
@@ -136,7 +138,24 @@
       (.fillRect context
                  (- (* middle-x tile-size) tile-size)
                  (- (* middle-y tile-size) tile-size)
-                 tower-size tower-size))))
+                 tower-size tower-size)
+      (set! (.-fillStyle context) "#ffffff")
+      (set! (.-globalAlpha context) "0.2")
+      (draw-circle context
+                   (* middle-x tile-size)
+                   (* middle-y tile-size)
+                   (* tile-size (tower-radius-by-type (:tower-to-build state))))
+      (set! (.-globalAlpha context) "1.0"))))
+
+(defn- draw-selected-tower-radius [context state]
+  (set! (.-fillStyle context) "#ffffff")
+  (set! (.-globalAlpha context) "0.2")
+  (when-let [selected-tower (:selected-tower state)]
+    (let [tower (get-in state [:towers selected-tower])
+          [x y] [(:x tower) (:y tower)]
+          [x y] [(* tile-size (inc x)) (* tile-size (inc y))]]
+      (draw-circle context x y (* tile-size (tower-radius tower)))))
+  (set! (.-globalAlpha context) "1.0"))
 
 (defn- draw-game-canvas [state]
   (let [context (get-2d-context "game-canvas")]
@@ -148,7 +167,8 @@
     (draw-creeps context state)
     (draw-projectiles context state)
     ; (draw-path-map context state)
-    (draw-tower-to-build context state)))
+    (draw-tower-to-build context state)
+    (draw-selected-tower-radius context state)))
 
 (defn- draw-selected-tower [context state]
   (when-let [tower (get (:towers state) (:selected-tower state))]

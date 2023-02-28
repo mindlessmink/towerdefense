@@ -75,6 +75,9 @@
 (defn tower-radius [tower]
   (tower-stat tower :radius))
 
+(defn tower-radius-by-type [tower-type]
+  (get-in tower-defs [tower-type 0 :radius]))
+
 (defn upgradeable? [tower]
   (< (:level tower) (count (:tower-def tower))))
 
