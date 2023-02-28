@@ -40,7 +40,7 @@
                      boss? (if (= creep-type :group)
                                    3
                                    1)
-                     (= creep-type :spawn) 5
+                     (= creep-type :spawn) 3
                      :else 10)]
     (Wave. wave-num creep-type num-creeps boss? 1000000)))
 
