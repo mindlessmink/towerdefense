@@ -78,7 +78,7 @@
     "n" (start-spawners state)
     "s" (try-sell-tower state)
     "u" (try-upgrade-tower state)
-    :else state))
+    state))
 
 (defn- process-pressed-keys [state]
   (let [old-keys (deref pressed-keys)]
