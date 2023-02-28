@@ -104,10 +104,15 @@
   (>= (:time-since-last-shot tower) (tower-fire-rate tower)))
 
 (defn- available-targets [tower creeps]
-  (let [targets (creeps-in-radius [(inc (:x tower)) (inc (:y tower))] (tower-radius tower) creeps)]
-    (if (= :swarm (:tower-type tower))
-      (filter #(= :flying (:creep-type (second %))) targets)
-      targets)))
+  (let [targets (creeps-in-radius [(inc (:x tower)) (inc (:y tower))] (tower-radius tower) creeps)
+        ;; Some towers don't hit all types of creeps.
+        ;; (Note that frost towers still hit immune creeps for minimal damage,
+        ;; it's just the frost effect that doesn't work.)
+        pred (case (:tower-type tower)
+               :swarm #(= :flying (:creep-type (second %)))
+               :dart #(not= :flying (:creep-type (second %)))
+               any?)]
+    (filter pred targets)))
 
 (defn- projectile-from-tower [tower creeps]
   (let [targetable-creeps (available-targets tower creeps)]
