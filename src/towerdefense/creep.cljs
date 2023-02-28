@@ -12,20 +12,29 @@
                                         make-path-map
                                         pixel->tile])))
 
-(defrecord Creep [creep-type health max-health wave value boss? coords target])
+(defrecord Creep [creep-type health max-health wave points money boss? coords target])
+
+(defn- creep-point-value [creep-type wave boss?]
+  (if boss?
+    (* 10 wave)
+    wave))
+
+(defn- creep-money-value [creep-type wave boss?]
+  (let [base-value (ceil (/ wave 8))]
+    (if boss?
+      (* base-value 20)
+      base-value)))
 
 (defn make-creep [creep-type wave boss? coords target]
   (let [health (if boss?
                  (* 100 wave)
-                 (* 10 wave))
-        value (if boss?
-                (* 10 wave)
-                wave)]
+                 (* 10 wave))]
     (Creep. creep-type
             health
             health
             wave
-            value
+            (creep-point-value creep-type wave boss?)
+            (creep-money-value creep-type wave boss?)
             boss?
             coords
             target)))
@@ -157,6 +166,17 @@
   (let [[floored-x floored-y] [(floor x) (floor y)]]
     [(+ floored-x (rand)) (+ floored-y (rand))]))
 
+(defn- make-spawn-baby [creep]
+  (let [health (floor (/ (:max-health creep) 2))
+        level (inc (get creep :spawn-level 0))]
+    (assoc creep
+           :health health
+           :max-health health
+           :points 0 ; could maybe give a few points for the babies too
+           :money 0
+           :spawn-level level
+           :coords (random-coords-in-tile (:coords creep)))))
+
 (defn- split-dead-spawns [state]
   (let [creeps (:creeps state)
         splitting-spawns (filter #(splitting-spawn? (second %)) creeps)]
@@ -166,22 +186,11 @@
         (assoc state
                :creeps
                (apply conj creeps new-creeps))
-        (let [[id curr-spawn] (first spawns)
-              new-health (floor (/ (:max-health curr-spawn) 2))
-              new-level (inc (get curr-spawn :spawn-level 0))
-              new-spawn (assoc curr-spawn
-                               :health new-health
-                               :max-health new-health
-                               :value 0
-                               :spawn-level new-level
-                               :coords (random-coords-in-tile (:coords curr-spawn)))
-              ; second baby is spawned in a different spot but otherwise identical
-              new-spawn-2 (assoc new-spawn
-                                 :coords (random-coords-in-tile (:coords curr-spawn)))]
+        (let [[_ curr-spawn] (first spawns)]
           (recur (apply conj
                         new-creeps
-                        [[(gensym "spawn-baby") new-spawn]
-                         [(gensym "spawn-baby") new-spawn-2]])
+                        [[(gensym "spawn-baby") (make-spawn-baby curr-spawn)]
+                         [(gensym "spawn-baby") (make-spawn-baby curr-spawn)]])
                  (next spawns)))))))
 
 (defn- update-frost-timers [state tick-seconds]
@@ -202,12 +211,14 @@
 (defn- remove-creeps [state]
   (let [creeps (:creeps state)
         dead-creeps (filter #(dead? (second %)) creeps)
-        dead-creeps-value (apply + (map #(get-in % [1 :value])
+        dead-creeps-points (apply + (map #(get-in % [1 :points])
+                                         dead-creeps))
+        dead-creeps-money (apply + (map #(get-in % [1 :money])
                                         dead-creeps))
         finished-creeps (filter #(finished? (second %)) creeps)]
     (-> state
-        (update :score + dead-creeps-value)
-        (update :money + dead-creeps-value)
+        (update :score + dead-creeps-points)
+        (update :money + dead-creeps-money)
         (update :lives - (count finished-creeps))
         (update :creeps (fn [creeps]
                           (apply dissoc creeps (map first dead-creeps))))
