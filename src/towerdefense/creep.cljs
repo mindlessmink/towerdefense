@@ -61,7 +61,7 @@
 
 (def ^:private creep-speeds {:normal 4
                              :group 4
-                             :fast 8
+                             :fast 6
                              :immune 4
                              :flying 4
                              :spawn 3
