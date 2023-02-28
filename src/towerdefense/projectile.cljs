@@ -62,6 +62,12 @@
               creeps
               targets))))
 
+(defn- freeze-creep [creep duration]
+  (if (= :immune (:creep-type creep))
+    creep
+    (let [old-duration (get creep :frosted 0.0)]
+      (assoc creep :frosted (max duration old-duration)))))
+
 (extend-type FrostBullet
   Projectile
   (hits? [bullet creeps]
@@ -69,12 +75,10 @@
       (< (distance (:coords bullet) (:coords target)) 1)))
   (hit [bullet creeps]
     (let [id (:target bullet)
-          creep (get creeps id)
-          damaged-creep (damage-creep creep (:damage bullet))
-          frosted-creep (if (= :immune (:creep-type creep))
-                          damaged-creep
-                          (assoc damaged-creep :frosted (:duration bullet)))]
-      (assoc creeps id frosted-creep))))
+          creep (-> (get creeps id)
+                    (damage-creep (:damage bullet))
+                    (freeze-creep (:duration bullet)))]
+      (assoc creeps id creep))))
 
 (defn update-projectiles [state tick-seconds]
   (let [moved-projectiles (move-projectiles state tick-seconds)
