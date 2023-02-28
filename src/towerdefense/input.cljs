@@ -10,6 +10,7 @@
                                         make-tower
                                         tower-build-cost
                                         tower-cost
+                                        tower-total-cost
                                         upgradeable?
                                         upgrade-cost
                                         upgrade-tower])))
@@ -43,7 +44,7 @@
       (let [tower (get (:towers state) selected-tower)]
         (-> state
             (update :towers dissoc selected-tower)
-            (update :money + (floor (* (tower-cost tower) 0.8)))
+            (update :money + (floor (* (tower-total-cost tower) 0.8)))
             (dissoc :selected-tower))))))
 
 (defn- try-upgrade-tower [state]

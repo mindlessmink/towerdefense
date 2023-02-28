@@ -67,6 +67,11 @@
 (defn tower-cost [tower]
   (tower-stat tower :cost))
 
+(defn tower-total-cost
+  "Cost of a tower including all its upgrades so far"
+  [tower]
+  (reduce + (take (:level tower) (map :cost (:tower-def tower)))))
+
 (defn tower-damage [tower]
   (tower-stat tower :damage))
 
