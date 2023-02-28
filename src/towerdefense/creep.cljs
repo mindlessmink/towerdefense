@@ -15,7 +15,7 @@
 (defrecord Creep [creep-type health max-health wave points money boss? coords target])
 
 (defn- creep-health [creep-type wave boss?]
-  (let [base (* 20 (pow 1.15 (dec wave)))]
+  (let [base (* 20 (pow 1.10 (dec wave)))]
     (if boss?
       (* 10 base)
       base)))
