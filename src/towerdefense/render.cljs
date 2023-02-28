@@ -38,12 +38,11 @@
         (.fillRect context x y tower-size tower-size)
         (set! (.-fillStyle context) "white")
         (set! (.-font context) "16px sans")
-        (let [letter (-> (:tower-type tower)
-                         name
-                         first
-                         .toUpperCase)
+        (let [tower-name (name (:tower-type tower))
+              letters (str (.toUpperCase (first tower-name))
+                           (second tower-name))
               level (:level tower)]
-          (.fillText context (str letter level) (+ 2 x) (+ tile-size y)))))))
+          (.fillText context (str letters level) (+ 2 x) (+ tile-size y)))))))
 
 (defn- draw-walls [context state]
   (set! (.-fillStyle context) "#bbbbbb")

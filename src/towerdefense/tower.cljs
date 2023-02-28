@@ -32,6 +32,13 @@
            [100 1.5 80 1 13]
            [150 1.5 160 1 14]
            [500 1.5 320 1.5 15])
+   :swarm (def-tower [:cost :fire-rate :damage :radius]
+            [50 0.8 15 8]
+            [50 0.8 30 8]
+            [75 0.8 60 8]
+            [100 0.8 100 8]
+            [150 0.8 150 8]
+            [400 0.6 400 10])
    :frost (def-tower [:cost :fire-rate :damage :frost-duration :radius]
             [50 1 5 2.0 8]
             [50 1 10 3.5 8]
@@ -97,7 +104,10 @@
   (>= (:time-since-last-shot tower) (tower-fire-rate tower)))
 
 (defn- available-targets [tower creeps]
-  (creeps-in-radius [(inc (:x tower)) (inc (:y tower))] (tower-radius tower) creeps))
+  (let [targets (creeps-in-radius [(inc (:x tower)) (inc (:y tower))] (tower-radius tower) creeps)]
+    (if (= :swarm (:tower-type tower))
+      (filter #(= :flying (:creep-type (second %))) targets)
+      targets)))
 
 (defn- projectile-from-tower [tower creeps]
   (let [targetable-creeps (available-targets tower creeps)]
@@ -124,6 +134,14 @@
     (if (empty? creeps)
       (assoc state :towers updated-timers)
       (let [firing-towers (filter #(should-fire? (second %)) updated-timers)
+            ;; Swarm towers fire multiple shots. As a quick hack we can just
+            ;; add them to the firing towers list several times.
+            firing-towers (reduce (fn [coll [id tower]]
+                                    (if (= :swarm (:tower-type tower))
+                                      (conj coll [id tower] [id tower])
+                                      coll))
+                                  firing-towers
+                                  firing-towers)
             fired-towers (map (fn [[id tower]]
                                 (if (should-fire? tower)
                                   [id (assoc tower :time-since-last-shot 0)]

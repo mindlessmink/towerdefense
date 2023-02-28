@@ -72,6 +72,7 @@
     "1" (assoc state :tower-to-build :pellet)
     "2" (assoc state :tower-to-build :squirt)
     "3" (assoc state :tower-to-build :dart)
+    "4" (assoc state :tower-to-build :swarm)
     "5" (assoc state :tower-to-build :frost)
     "m" (update state :money + 10000) ; for testing
     "n" (start-spawners state)
