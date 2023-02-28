@@ -14,21 +14,25 @@
 
 (defrecord Creep [creep-type health max-health wave points money boss? coords target])
 
+(defn- creep-health [creep-type wave boss?]
+  (let [base (* 20 (pow 1.15 (dec wave)))]
+    (if boss?
+      (* 10 base)
+      base)))
+
 (defn- creep-point-value [creep-type wave boss?]
   (if boss?
     (* 10 wave)
     wave))
 
 (defn- creep-money-value [creep-type wave boss?]
-  (let [base-value (ceil (/ wave 8))]
+  (let [base-value (ceil (/ (inc wave) 8))]
     (if boss?
       (* base-value 20)
       base-value)))
 
 (defn make-creep [creep-type wave boss? coords target]
-  (let [health (if boss?
-                 (* 100 wave)
-                 (* 10 wave))]
+  (let [health (creep-health creep-type wave boss?)]
     (Creep. creep-type
             health
             health
