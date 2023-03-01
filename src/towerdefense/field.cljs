@@ -1,6 +1,8 @@
 (ns towerdefense.field
   (:require (clojure.set :refer [union])
-            (cljs.math :refer [floor
+            (cljs.math :refer [atan2
+                               floor
+                               PI
                                sqrt])))
 
 ;; Creeps try to reach their target.
@@ -160,3 +162,30 @@
   (let [a (- x2 x1)
         b (- y2 y1)]
     (sqrt (+ (* a a) (* b b)))))
+
+(defn normalize-vector [[x y]]
+  (let [len (distance [0 0] [x y])]
+    [(/ x len) (/ y len)]))
+
+(defn unit-vector 
+  "Takes two points and returns a vector of length 1 pointing from the first
+  point to the second."
+  [[x1 y1] [x2 y2]]
+  (let [[dx dy :as delta] [(- x2 x1) (- y2 y1)]]
+    (normalize-vector delta)))
+
+(def directions
+  "Angles in radians."
+  {:e 0
+   :ne (/ PI 4)
+   :n (/ PI 2)
+   :nw (* PI (/ 3 4))
+   :w PI
+   :sw (* PI (/ 5 4))
+   :s (* PI (/ 3 2))
+   :se (* PI (/ 7 4))})
+
+(defn vector->angle [[x y]]
+  (let [y (- 0 y)] ; in computer graphics y increases when you go down, in math
+                   ; it's the opposite
+    (atan2 y x)))

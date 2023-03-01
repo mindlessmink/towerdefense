@@ -111,6 +111,23 @@
                                      (* tile-size 0.2))
     :else (* tile-size 0.5)))
 
+(defn- draw-creep-shape [context creep]
+  (let [[x y] (mapv (partial * tile-size) (:coords creep))
+        size (creep-size creep)
+        dir (:dir creep)
+        old-tf (.getTransform context)
+        old-fs (.-fillStyle context)]
+    (.translate context x y)
+    (.rotate context (- (* 2 PI) dir))
+    (set! (.-fillStyle context) (creep-color creep))
+    (draw-circle context 0 0 size)
+    (set! (.-fillStyle context) "black")
+    ;; eyes of the creep
+    (draw-circle context (dec size) -2 1)
+    (draw-circle context (dec size) 2 1)
+    (set! (.-fillStyle context) old-fs)
+    (.setTransform context old-tf)))
+
 (defn- draw-creeps [context state]
   (doseq [[id creep] (:creeps state)]
     (let [size (creep-size creep)
@@ -118,8 +135,7 @@
       (when (:frosted creep)
         (set! (.-fillStyle context) "#00dddd")
         (draw-circle context x y (+ 2 size)))
-      (set! (.-fillStyle context) (creep-color creep))
-      (draw-circle context x y size)
+      (draw-creep-shape context creep)
       (draw-creep-health-bar context creep))))
 
 (defn- draw-projectiles [context state]

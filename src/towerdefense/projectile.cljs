@@ -1,7 +1,8 @@
 (ns towerdefense.projectile
   (:require (towerdefense.creep :refer [creeps-in-radius
                                         damage-creep])
-            (towerdefense.field :refer [distance])))
+            (towerdefense.field :refer [distance
+                                        unit-vector])))
 
 (defprotocol Projectile
   (hits? [projectile creeps])
@@ -15,16 +16,11 @@
 
 (def ^:private projectile-speed 15)
 
-(defn movement-vector [[x1 y1] [x2 y2]]
-  (let [[dx dy :as delta] [(- x2 x1) (- y2 y1)]
-        dist (distance [x1 y1] [x2 y2])]
-    [(/ dx dist) (/ dy dist)]))
-
 (defn- move-projectile [projectile creeps tick-seconds]
   (let [target-creep (get creeps (:target projectile))
         [bx by :as projectile-coords] (:coords projectile)
         [cx cy :as creep-coords] (:coords target-creep)
-        [dx dy :as delta] (movement-vector projectile-coords creep-coords)
+        [dx dy :as delta] (unit-vector projectile-coords creep-coords)
         dist (* projectile-speed tick-seconds)]
     (assoc projectile :coords [(+ bx (* dist dx))
                            (+ by (* dist dy))])))

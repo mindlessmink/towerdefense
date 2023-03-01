@@ -10,9 +10,10 @@
                                         find-path-on-map
                                         in-target?
                                         make-path-map
-                                        pixel->tile])))
+                                        pixel->tile
+                                        vector->angle])))
 
-(defrecord Creep [creep-type health max-health wave points money boss? coords target])
+(defrecord Creep [creep-type health max-health wave points money boss? coords dir target])
 
 (defn- creep-health [creep-type wave boss?]
   (let [base (* 20 (pow 1.10 (dec wave)))]
@@ -41,6 +42,7 @@
             (creep-money-value creep-type wave boss?)
             boss?
             coords
+            0
             target)))
 
 (defn creep-tile
@@ -126,9 +128,11 @@
   (let [target (:target creep)
         [x y] (:coords creep)
         closest-tile (find-closest-tile (:coords creep) (:tiles target))
-        [dx dy] (get-delta-flying creep closest-tile)
+        [dx dy :as delta] (get-delta-flying creep closest-tile)
         dist (* tick-seconds (creep-speed creep))]
-    (assoc creep :coords [(+ x (* dx dist)) (+ y (* dy dist))])))
+    (assoc creep
+           :coords [(+ x (* dx dist)) (+ y (* dy dist))]
+           :dir (vector->angle delta))))
 
 (defn- move-creep [state path-map creep tick-seconds]
   (if (= :flying (:creep-type creep))
@@ -137,7 +141,9 @@
           dist (* (creep-speed creep) tick-seconds) ; how many pixels this moves
           delta (get-delta state path-map creep)
           possible-targets (remove #(blocked? state (mapv floor %)) (make-targets coords dist delta))]
-      (assoc creep :coords (first possible-targets)))))
+      (assoc creep
+             :coords (first possible-targets)
+             :dir (vector->angle delta)))))
 
 (defn- dead? [creep]
   (<= (:health creep) 0))
