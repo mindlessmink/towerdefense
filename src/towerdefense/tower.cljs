@@ -1,7 +1,9 @@
 (ns towerdefense.tower
   (:require (cljs.math :refer [sqrt])
             (towerdefense.creep :refer [creeps-in-radius])
-            (towerdefense.field :refer [distance])
+            (towerdefense.field :refer [distance
+                                        unit-vector
+                                        vector->angle])
             (towerdefense.projectile :refer [Bullet
                                              Dart
                                              FrostBullet
@@ -47,7 +49,7 @@
             [50 1 25 8.0 8]
             [150 1 30 12.0 10])})
 
-(defrecord Tower [tower-type tower-def level x y time-since-last-shot])
+(defrecord Tower [tower-type tower-def level x y dir time-since-last-shot])
 
 (defn make-tower [tower-type level x y]
   (if-let [tower-def (get tower-defs tower-type)]
@@ -56,6 +58,7 @@
             level
             x
             y
+            0
             1000)))
 
 (defn tower-stat [tower stat]
@@ -119,48 +122,49 @@
                any?)]
     (filter pred targets)))
 
-(defn- projectile-from-tower [tower creeps]
-  (let [targetable-creeps (available-targets tower creeps)]
+(defn- projectile-from-tower
+  "Make a projectile targeting given creep"
+  [tower creep]
+  (case (:tower-type tower)
+    :dart (Dart. (tower-damage tower)
+                 (tower-dart-radius tower)
+                 creep
+                 [(inc (:x tower)) (inc (:y tower))])
+    :frost (FrostBullet. (tower-damage tower)
+                         (tower-frost-duration tower)
+                         creep
+                         [(inc (:x tower)) (inc (:y tower))])
+    (Bullet. (tower-damage tower)
+             creep
+             [(inc (:x tower)) (inc (:y tower))])))
+
+(defn- pick-targets [targets n]
+  (if (zero? n)
+    []
+    (conj (pick-targets targets (dec n)) (rand-nth targets))))
+
+(defn- fire-tower [state id]
+  (let [tower (get-in state [:towers id])
+        tower-type (:tower-type tower)
+        targetable-creeps (available-targets tower (:creeps state))]
     (if (empty? targetable-creeps)
-      nil
-      (let [target (rand-nth targetable-creeps)] ; for now
-        (case (:tower-type tower)
-          :dart (Dart. (tower-damage tower)
-                       (tower-dart-radius tower)
-                       (first target)
-                       [(inc (:x tower)) (inc (:y tower))])
-          :frost (FrostBullet. (tower-damage tower)
-                               (tower-frost-duration tower)
-                               (first target)
-                               [(inc (:x tower)) (inc (:y tower))])
-          (Bullet. (tower-damage tower)
-                   (first target)
-                   [(inc (:x tower)) (inc (:y tower))]))))))
+      state
+      (let [targets (pick-targets targetable-creeps (if (= :swarm tower-type) 3 1))
+            projectiles (map #(projectile-from-tower tower (first %)) targets)]
+        (-> state
+            (update :projectiles #(apply conj % projectiles))
+            (assoc-in [:towers id :time-since-last-shot] 0)
+            (assoc-in [:towers id :dir]
+                      (vector->angle (unit-vector [(:x tower) (:y tower)] (:coords (second (first targets)))))))))))
 
 (defn update-towers [state tick-seconds]
   (let [towers (:towers state)
         updated-timers (update-timers towers tick-seconds)
+        state (assoc state :towers updated-timers)
         creeps (:creeps state)]
     (if (empty? creeps)
-      (assoc state :towers updated-timers)
-      (let [firing-towers (filter #(should-fire? (second %)) updated-timers)
-            ;; Swarm towers fire multiple shots. As a quick hack we can just
-            ;; add them to the firing towers list several times.
-            firing-towers (reduce (fn [coll [id tower]]
-                                    (if (= :swarm (:tower-type tower))
-                                      (conj coll [id tower] [id tower])
-                                      coll))
-                                  firing-towers
-                                  firing-towers)
-            fired-towers (map (fn [[id tower]]
-                                (if (should-fire? tower)
-                                  [id (assoc tower :time-since-last-shot 0)]
-                                  [id tower]))
-                              updated-timers)
-            projectiles (filterv (complement nil?)
-                                 (map #(projectile-from-tower % creeps)
-                                      (map second firing-towers)))]
-        (-> state
-            (assoc :towers (reduce conj (hash-map) fired-towers))
-            (update :projectiles (fn [old-projectiles]
-                                   (apply conj old-projectiles projectiles))))))))
+      state
+      (let [firing-towers (filter #(should-fire? (second %)) updated-timers)]
+        (reduce #(fire-tower %1 (first %2))
+                state
+                firing-towers)))))
