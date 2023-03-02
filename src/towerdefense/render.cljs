@@ -19,10 +19,12 @@
 (def tile-size 16)
 (def tower-size (* 2 tile-size))
 
-(defn- draw-circle [context x y radius]
+(defn- draw-circle [context x y radius outline?]
   (.beginPath context)
   (.arc context x y radius 0 (* 2 PI) true)
-  (.fill context))
+  (.fill context)
+  (when outline?
+    (.stroke context)))
 
 (defn- get-2d-context [canvas-name]
   (.getContext (.getElementById js/document canvas-name) "2d"))
@@ -120,11 +122,46 @@
     (.translate context x y)
     (.rotate context (- (* 2 PI) dir))
     (set! (.-fillStyle context) (creep-color creep))
-    (draw-circle context 0 0 size)
-    (set! (.-fillStyle context) "black")
-    ;; eyes of the creep
-    (draw-circle context (dec size) -2 1)
-    (draw-circle context (dec size) 2 1)
+    (if (:frosted creep)
+      (set! (.-strokeStyle context) "#00dddd")
+      (set! (.-strokeStyle context) "black"))
+    (case (:creep-type creep)
+      :normal (draw-circle context 0 0 size true)
+      :fast (do
+              (.beginPath context)
+              (.moveTo context (* -1.2 size) 0)
+              (.lineTo context 0 (* 0.75 size))
+              (.arc context 0 0 (* 0.75 size) (* 0.5 PI) (* 1.5 PI) true)
+              (.closePath context)
+              (.fill context)
+              (.stroke context))
+      :immune (draw-circle context 0 0 size true)
+      :group (draw-circle context 0 0 size true)
+      :spawn (if (contains? creep :spawn-level)
+               (draw-circle context 0 0 size true)
+               (do
+                 (.beginPath context)
+                 (.arc context (* 0.5 size) 0 (* 0.5 size) (* 1.2 PI) (* 0.8 PI))
+                 (.arc context (* -0.5 size) 0 (* 0.5 size) (* 0.2 PI) (* 1.8 PI))
+                 (.closePath context)
+                 (.fill context)
+                 (.stroke context)))
+      :dark (do
+              (.beginPath context)
+              (.arc context 0 0 size (* 0.6 PI) (* 1.4 PI) true)
+              (.lineTo context 0 0)
+              (.closePath context)
+              (.fill context)
+              (.stroke context))
+      :flying (do
+                (.beginPath context)
+                (.moveTo context (- size) (* -0.75 size))
+                (.lineTo context (- size) (* 0.75 size))
+                (.lineTo context size 0)
+                (.lineTo context (- size) (* -0.75 size))
+                (.fill context)
+                (.stroke context))
+      nil)
     (set! (.-fillStyle context) old-fs)
     (.setTransform context old-tf)))
 
@@ -132,9 +169,6 @@
   (doseq [[id creep] (:creeps state)]
     (let [size (creep-size creep)
           [x y] (mapv #(* tile-size %) (:coords creep))]
-      (when (:frosted creep)
-        (set! (.-fillStyle context) "#00dddd")
-        (draw-circle context x y (+ 2 size)))
       (draw-creep-shape context creep)
       (draw-creep-health-bar context creep))))
 
@@ -142,7 +176,7 @@
   (doseq [projectile (:projectiles state)]
     (let [[x y] (mapv #(* tile-size %) (:coords projectile))]
       (set! (.-fillStyle context) "blue")
-      (draw-circle context x y 2))))
+      (draw-circle context x y 2 false))))
 
 (defn- draw-tower-to-build [context state]
   (when (:tower-to-build state)
@@ -159,7 +193,8 @@
       (draw-circle context
                    (* middle-x tile-size)
                    (* middle-y tile-size)
-                   (* tile-size (tower-radius-by-type (:tower-to-build state))))
+                   (* tile-size (tower-radius-by-type (:tower-to-build state)))
+                   false)
       (set! (.-globalAlpha context) "1.0"))))
 
 (defn- draw-selected-tower-radius [context state]
@@ -169,7 +204,7 @@
     (let [tower (get-in state [:towers selected-tower])
           [x y] [(:x tower) (:y tower)]
           [x y] [(* tile-size (inc x)) (* tile-size (inc y))]]
-      (draw-circle context x y (* tile-size (tower-radius tower)))))
+      (draw-circle context x y (* tile-size (tower-radius tower)) false)))
   (set! (.-globalAlpha context) "1.0"))
 
 (defn- draw-game-canvas [state]
