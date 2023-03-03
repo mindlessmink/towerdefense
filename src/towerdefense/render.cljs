@@ -33,18 +33,61 @@
   (let [selected-tower (:selected-tower state)]
     (doseq [[id tower] (:towers state)]
       (let [x (* tile-size (:x tower))
-            y (* tile-size (:y tower))]
+            y (* tile-size (:y tower))
+            tower-type (:tower-type tower)
+            level (:level tower)]
+        (.save context)
         (if (= id selected-tower)
-          (set! (.-fillStyle context) "#000088")
-          (set! (.-fillStyle context) "black"))
-        (.fillRect context x y tower-size tower-size)
-        (set! (.-fillStyle context) "white")
-        (set! (.-font context) "16px sans")
-        (let [tower-name (name (:tower-type tower))
-              letters (str (.toUpperCase (first tower-name))
-                           (second tower-name))
-              level (:level tower)]
-          (.fillText context (str letters level) (+ 2 x) (+ tile-size y)))))))
+          (set! (.-strokeStyle context) "#000088")
+          (set! (.-strokeStyle context) "black"))
+        (.translate context (+ x tile-size) (+ y tile-size))
+        (.strokeRect context (- tile-size) (- tile-size) tower-size tower-size)
+        ;; one dot for each upgrade
+        (set! (.-fillStyle context) "blue")
+        (loop [dots (dec level)
+               x (* -0.875 tile-size)]
+          (when (pos? dots)
+            (.fillRect context x (* 0.7 tile-size) (* 0.25 tile-size) (* 0.25 tile-size))
+            (recur (dec dots) (+ x (* 0.375 tile-size)))))
+        ;; swarm tower doesn't rotate
+        (when-not (= :swarm tower-type)
+          (.rotate context (- (* 2 PI) (:dir tower))))
+        (case tower-type
+          :pellet (do
+                    (.beginPath context)
+                    (.arc context 0 0 (* 0.2 tile-size) 0 (* 2 PI))
+                    (.stroke context)
+                    (.strokeRect context (* 0.2 tile-size) (* -0.1 tile-size) (* 0.5 tile-size) (* 0.2 tile-size)))
+          :squirt (do
+                    (.beginPath context)
+                    (.arc context (* -0.3 tile-size) 0 (* 0.6 tile-size) (* 0.2 PI) (* 1.8 PI))
+                    (.lineTo context (* 0.8 tile-size) (* -0.2 tile-size))
+                    (.lineTo context (* 0.8 tile-size) (* 0.2 tile-size))
+                    (.closePath context)
+                    (.stroke context))
+          :dart (do
+                  (.strokeRect context (* -0.8 tile-size) (* -0.8 tile-size) (* 1.6 tile-size) (* 0.6 tile-size))
+                  (.strokeRect context (* -0.8 tile-size) (* 0.2 tile-size) (* 1.6 tile-size) (* 0.6 tile-size))
+                  (.strokeRect context (* -0.2 tile-size) (* -0.2 tile-size) (* 0.4 tile-size) (* 0.4 tile-size)))
+          :swarm (do
+                   (.beginPath context)
+                   (.moveTo context (* -0.5 tile-size) 0)
+                   (.lineTo context 0 (* -0.5 tile-size))
+                   (.lineTo context (* 0.5 tile-size) 0)
+                   (.lineTo context 0 (* 0.5 tile-size))
+                   (.closePath context)
+                   (.stroke context))
+          :frost (do
+                   (set! (.-fillStyle context) "white")
+                   (.beginPath context)
+                   (.arc context 0 0 (* 0.4 tile-size) (* 0.3 PI) (* 1.7 PI))
+                   (.lineTo context (* 0.6 tile-size) (* -0.3 tile-size))
+                   (.lineTo context (* 0.6 tile-size) (* 0.3 tile-size))
+                   (.closePath context)
+                   (.fill context)
+                   (.stroke context))
+          nil)
+        (.restore context)))))
 
 (defn- draw-walls [context state]
   (set! (.-fillStyle context) "#bbbbbb")
