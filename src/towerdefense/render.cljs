@@ -267,48 +267,48 @@
   (when-let [tower (get (:towers state) (:selected-tower state))]
     (.fillText context
                (str "Selected tower: " (name (:tower-type tower)))
-               0 100)
+               640 100)
     (when (upgradeable? tower)
       (.fillText context
                  (str "Upgrade cost: $" (upgrade-cost tower))
-                 0 120))))
+                 640 120))))
 
 (defn- draw-wave-info [context state]
   (let [spawner (first (:spawners state))
         wave-num (:curr-wave-num spawner)
         next-wave (inc wave-num)]
     (if (zero? wave-num)
-      (.fillText context "Press <n> to start" 0 200)
+      (.fillText context "Press <n> to start" 640 200)
       (do
-        (.fillText context (str "Current wave: " wave-num) 0 200)
-        (.fillText context (describe-wave wave-num) 20 220)
+        (.fillText context (str "Current wave: " wave-num) 640 200)
+        (.fillText context (describe-wave wave-num) 660 220)
         (if-let [timer (:time-since-last-wave spawner)]
           (let [time-remaining (ceil (- wave-time timer))]
             (.fillText context
                        (str "Next wave in " time-remaining " seconds")
-                       0 240)
-            (.fillText context (describe-wave next-wave) 20 260)))))))
+                       640 240)
+            (.fillText context (describe-wave next-wave) 660 260)))))))
 
 (defn- draw-side-panel [state]
-  (let [context (get-2d-context "side-panel")]
+  (let [context (get-2d-context "game-canvas")]
     (set! (.-fillStyle context) "#77ff77")
-    (.fillRect context 0 0 200 480)
+    (.fillRect context 640 0 160 480)
     (set! (.-fillStyle context) "black")
     (set! (.-font context) "16px sans")
-    (.fillText context (str "Score: " (:score state)) 0 20)
-    (.fillText context (str "Money: $" (:money state)) 0 40)
-    (.fillText context (str "Lives: " (:lives state)) 0 60)
+    (.fillText context (str "Score: " (:score state)) 640 20)
+    (.fillText context (str "Money: $" (:money state)) 640 40)
+    (.fillText context (str "Lives: " (:lives state)) 640 60)
     (when-let [tower-to-build (:tower-to-build state)]
+      (.fillText context "Selected tower:" 640 80)
       (.fillText context
-                 (str "Selected tower: "
-                      (name tower-to-build)
+                 (str (name tower-to-build)
                       " ($"
                       (tower-build-cost tower-to-build)
                       ")")
-                 0 80))
+                 660 100))
     (draw-selected-tower context state)
     (draw-wave-info context state)
-    (.fillText context (str "Frame: " (:frames-rendered state)) 0 450)))
+    (.fillText context (str "Frame: " (:frames-rendered state)) 640 450)))
 
 (defn render-game [state]
   (draw-game-canvas state)
