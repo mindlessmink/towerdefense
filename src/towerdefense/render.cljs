@@ -16,8 +16,25 @@
                                         upgradeable?
                                         upgrade-cost])))
 
+;; Internally the game uses tiles to represent coordinates. One tile is
+;; one fourth of a tower. These sizes also include the side panel.
+(def canvas-width 50)
+(def canvas-height 30)
+
+;; Originally the game used a tile size of 16 pixels. We'll continue using
+;; that for now but it will be scaled to the actual size.
 (def tile-size 16)
 (def tower-size (* 2 tile-size))
+
+;;; The canvas is scaled as big as possible to fill the browser window.
+(defn calculate-scale-factor []
+  (let [window-width (.-innerWidth js/window)
+        window-height (.-innerHeight js/window)
+        canvas-ratio (/ canvas-width canvas-height)
+        window-ratio (/ window-width window-height)]
+    (if (> window-ratio canvas-ratio)
+      (/ window-height canvas-height tile-size)
+      (/ window-width canvas-width tile-size))))
 
 (defn- draw-circle [context x y radius outline?]
   (.beginPath context)
@@ -311,5 +328,12 @@
     (.fillText context (str "Frame: " (:frames-rendered state)) 640 450)))
 
 (defn render-game [state]
+  (let [game-canvas (.getElementById js/document "game-canvas")
+        context (.getContext game-canvas "2d")
+        scale-factor (calculate-scale-factor)]
+    (set! (.-width game-canvas) (* canvas-width tile-size scale-factor))
+    (set! (.-height game-canvas) (* canvas-height tile-size scale-factor))
+    (.resetTransform context)
+    (.scale context scale-factor scale-factor))
   (draw-game-canvas state)
   (draw-side-panel state))

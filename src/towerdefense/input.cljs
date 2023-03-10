@@ -6,6 +6,8 @@
             (towerdefense.field :refer [make-blockmap
                                         maybe-update-path-maps
                                         tower-tiles])
+            (towerdefense.render :refer [calculate-scale-factor
+                                         tile-size])
             (towerdefense.tower :refer [Tower
                                         make-tower
                                         tower-build-cost
@@ -23,7 +25,9 @@
 (def ^:private mouse-pos (atom [0 0]))
 
 (defn- mouse-move-handler [event]
-  (reset! mouse-pos [(.-offsetX event) (.-offsetY event)]))
+  (let [scale-factor (calculate-scale-factor)]
+    (reset! mouse-pos [(/ (.-offsetX event) scale-factor)
+                       (/ (.-offsetY event) scale-factor)])))
 
 (def ^:private mouse-clicked (atom false))
 
@@ -106,6 +110,7 @@
 
 (defn- try-build-tower [state]
   (let [[x y :as pos] (:mouse-pos state)
+        scale-factor (calculate-scale-factor)
         tower-to-build (:tower-to-build state)
         cost (tower-build-cost tower-to-build)
         money (:money state)]
@@ -114,8 +119,8 @@
       state
       (let [tower (make-tower tower-to-build
                               1
-                              (dec (round (/ x 16)))
-                              (dec (round (/ y 16))))
+                              (dec (round (/ x tile-size)))
+                              (dec (round (/ y tile-size))))
             tiles (tower-tiles tower)
             blockmap (make-blockmap state)]
         (if (not-any? #(contains? blockmap %) tiles)
@@ -125,8 +130,8 @@
 (defn- process-mouse-clicks [state]
   (let [clicked? (deref mouse-clicked)
         [x y :as pos] (:mouse-pos state)
-        [tx ty :as clicked-tile] [(floor (/ x 16))
-                                  (floor (/ y 16))]
+        [tx ty :as clicked-tile] [(floor (/ x tile-size))
+                                  (floor (/ y tile-size))]
         towers (:towers state)]
     (reset! mouse-clicked false)
     (if-not clicked?
