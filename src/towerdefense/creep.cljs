@@ -71,13 +71,9 @@
 
 ;; Tiles per second
 (defn- creep-speed [creep]
-  (let [base-speed (get creep-speeds (:creep-type creep) 4)
-        speed (if (:boss? creep)
-                (* base-speed 0.8)
-                base-speed)]
-    (if (:frosted creep)
-      (* speed 0.5)
-      speed)))
+  (cond-> (get creep-speeds (:creep-type creep) 4)
+    (:boss? creep) (* 0.8)
+    (:frosted creep) (* 0.5)))
 
 (defn creep-armor [creep]
   (if-not (= :dark (:creep-type creep))
