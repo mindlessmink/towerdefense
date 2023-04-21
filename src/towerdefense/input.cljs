@@ -7,7 +7,8 @@
                                         maybe-update-path-maps
                                         tower-tiles])
             (towerdefense.render :refer [calculate-scale-factor
-                                         tile-size])
+                                         tile-size
+                                         tower-size])
             (towerdefense.tower :refer [Tower
                                         make-tower
                                         tower-build-cost
@@ -127,6 +128,9 @@
           (try-place-tower tower cost state)
           state)))))
 
+(defn- mouse-in-box? [[x y] [x1 y1] [x2 y2]]
+  (and (<= x1 x x2) (<= y1 y y2)))
+
 (defn- process-mouse-clicks [state]
   (let [clicked? (deref mouse-clicked)
         [x y :as pos] (:mouse-pos state)
@@ -134,17 +138,30 @@
                                   (floor (/ y tile-size))]
         towers (:towers state)]
     (reset! mouse-clicked false)
-    (if-not clicked?
-      state
-      (if-let [tower (first (filter (fn [[id tower]]
-                                      (some #(= clicked-tile %)
-                                            (tower-tiles tower)))
-                                    towers))]
-        (-> state
-            (assoc :selected-tower (first tower))
-            (dissoc :tower-to-build))
-        (-> (try-build-tower state)
-            (dissoc :selected-tower))))))
+    (cond
+      (not clicked?) state
+
+      ; side panel buttons
+      (mouse-in-box? pos [640 80] [(+ 640 (* 5 tower-size)) (+ 80 tower-size)])
+      (-> state
+          (assoc :tower-to-build
+                 (cond
+                   (< x (+ 640 (* 1 tower-size))) :pellet
+                   (< x (+ 640 (* 2 tower-size))) :squirt
+                   (< x (+ 640 (* 3 tower-size))) :dart
+                   (< x (+ 640 (* 4 tower-size))) :swarm
+                   :else :frost))
+          (dissoc :selected-tower))
+      
+      :else (if-let [tower (first (filter (fn [[id tower]]
+                                            (some #(= clicked-tile %)
+                                                  (tower-tiles tower)))
+                                          towers))]
+              (-> state
+                  (assoc :selected-tower (first tower))
+                  (dissoc :tower-to-build))
+              (-> (try-build-tower state)
+                  (dissoc :selected-tower))))))
 
 (defn- process-mouse-events [state]
   (-> state

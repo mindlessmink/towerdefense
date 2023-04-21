@@ -46,65 +46,71 @@
 (defn- get-2d-context [canvas-name]
   (.getContext (.getElementById js/document canvas-name) "2d"))
 
+(defn- draw-tower-at
+  ([context tower-type [x y]] (draw-tower-at context tower-type [x y] 0 0 false))
+  ([context tower-type [x y] angle level selected?]
+   (.save context)
+   (if selected?
+     (set! (.-strokeStyle context) "#000088")
+     (set! (.-strokeStyle context) "black"))
+   (.translate context (+ x tile-size) (+ y tile-size))
+   (.strokeRect context (- tile-size) (- tile-size) tower-size tower-size)
+   ;; one dot for each upgrade
+   (set! (.-fillStyle context) "blue")
+   (loop [dots (dec level)
+          x (* -0.875 tile-size)]
+     (when (pos? dots)
+       (.fillRect context x (* 0.7 tile-size) (* 0.25 tile-size) (* 0.25 tile-size))
+       (recur (dec dots) (+ x (* 0.375 tile-size)))))
+   ;; swarm tower doesn't rotate
+   (when-not (= :swarm tower-type)
+     (.rotate context (- (* 2 PI) angle)))
+   (case tower-type
+     :pellet (do
+               (.beginPath context)
+               (.arc context 0 0 (* 0.2 tile-size) 0 (* 2 PI))
+               (.stroke context)
+               (.strokeRect context (* 0.2 tile-size) (* -0.1 tile-size) (* 0.5 tile-size) (* 0.2 tile-size)))
+     :squirt (do
+               (.beginPath context)
+               (.arc context (* -0.3 tile-size) 0 (* 0.6 tile-size) (* 0.2 PI) (* 1.8 PI))
+               (.lineTo context (* 0.8 tile-size) (* -0.2 tile-size))
+               (.lineTo context (* 0.8 tile-size) (* 0.2 tile-size))
+               (.closePath context)
+               (.stroke context))
+     :dart (do
+             (.strokeRect context (* -0.8 tile-size) (* -0.8 tile-size) (* 1.6 tile-size) (* 0.6 tile-size))
+             (.strokeRect context (* -0.8 tile-size) (* 0.2 tile-size) (* 1.6 tile-size) (* 0.6 tile-size))
+             (.strokeRect context (* -0.2 tile-size) (* -0.2 tile-size) (* 0.4 tile-size) (* 0.4 tile-size)))
+     :swarm (do
+              (.beginPath context)
+              (.moveTo context (* -0.5 tile-size) 0)
+              (.lineTo context 0 (* -0.5 tile-size))
+              (.lineTo context (* 0.5 tile-size) 0)
+              (.lineTo context 0 (* 0.5 tile-size))
+              (.closePath context)
+              (.stroke context))
+     :frost (do
+              (set! (.-fillStyle context) "white")
+              (.beginPath context)
+              (.arc context 0 0 (* 0.4 tile-size) (* 0.3 PI) (* 1.7 PI))
+              (.lineTo context (* 0.6 tile-size) (* -0.3 tile-size))
+              (.lineTo context (* 0.6 tile-size) (* 0.3 tile-size))
+              (.closePath context)
+              (.fill context)
+              (.stroke context))
+     nil)
+   (.restore context)))
+
 (defn- draw-towers [context state]
   (let [selected-tower (:selected-tower state)]
     (doseq [[id tower] (:towers state)]
       (let [x (* tile-size (:x tower))
             y (* tile-size (:y tower))
+            angle (:dir tower)
             tower-type (:tower-type tower)
             level (:level tower)]
-        (.save context)
-        (if (= id selected-tower)
-          (set! (.-strokeStyle context) "#000088")
-          (set! (.-strokeStyle context) "black"))
-        (.translate context (+ x tile-size) (+ y tile-size))
-        (.strokeRect context (- tile-size) (- tile-size) tower-size tower-size)
-        ;; one dot for each upgrade
-        (set! (.-fillStyle context) "blue")
-        (loop [dots (dec level)
-               x (* -0.875 tile-size)]
-          (when (pos? dots)
-            (.fillRect context x (* 0.7 tile-size) (* 0.25 tile-size) (* 0.25 tile-size))
-            (recur (dec dots) (+ x (* 0.375 tile-size)))))
-        ;; swarm tower doesn't rotate
-        (when-not (= :swarm tower-type)
-          (.rotate context (- (* 2 PI) (:dir tower))))
-        (case tower-type
-          :pellet (do
-                    (.beginPath context)
-                    (.arc context 0 0 (* 0.2 tile-size) 0 (* 2 PI))
-                    (.stroke context)
-                    (.strokeRect context (* 0.2 tile-size) (* -0.1 tile-size) (* 0.5 tile-size) (* 0.2 tile-size)))
-          :squirt (do
-                    (.beginPath context)
-                    (.arc context (* -0.3 tile-size) 0 (* 0.6 tile-size) (* 0.2 PI) (* 1.8 PI))
-                    (.lineTo context (* 0.8 tile-size) (* -0.2 tile-size))
-                    (.lineTo context (* 0.8 tile-size) (* 0.2 tile-size))
-                    (.closePath context)
-                    (.stroke context))
-          :dart (do
-                  (.strokeRect context (* -0.8 tile-size) (* -0.8 tile-size) (* 1.6 tile-size) (* 0.6 tile-size))
-                  (.strokeRect context (* -0.8 tile-size) (* 0.2 tile-size) (* 1.6 tile-size) (* 0.6 tile-size))
-                  (.strokeRect context (* -0.2 tile-size) (* -0.2 tile-size) (* 0.4 tile-size) (* 0.4 tile-size)))
-          :swarm (do
-                   (.beginPath context)
-                   (.moveTo context (* -0.5 tile-size) 0)
-                   (.lineTo context 0 (* -0.5 tile-size))
-                   (.lineTo context (* 0.5 tile-size) 0)
-                   (.lineTo context 0 (* 0.5 tile-size))
-                   (.closePath context)
-                   (.stroke context))
-          :frost (do
-                   (set! (.-fillStyle context) "white")
-                   (.beginPath context)
-                   (.arc context 0 0 (* 0.4 tile-size) (* 0.3 PI) (* 1.7 PI))
-                   (.lineTo context (* 0.6 tile-size) (* -0.3 tile-size))
-                   (.lineTo context (* 0.6 tile-size) (* 0.3 tile-size))
-                   (.closePath context)
-                   (.fill context)
-                   (.stroke context))
-          nil)
-        (.restore context)))))
+        (draw-tower-at context tower-type [x y] angle level (= selected-tower id))))))
 
 (defn- draw-walls [context state]
   (set! (.-fillStyle context) "#bbbbbb")
@@ -284,27 +290,27 @@
   (when-let [tower (get (:towers state) (:selected-tower state))]
     (.fillText context
                (str "Selected tower: " (name (:tower-type tower)))
-               640 100)
+               640 160)
     (when (upgradeable? tower)
       (.fillText context
                  (str "Upgrade cost: $" (upgrade-cost tower))
-                 640 120))))
+                 640 180))))
 
 (defn- draw-wave-info [context state]
   (let [spawner (first (:spawners state))
         wave-num (:curr-wave-num spawner)
         next-wave (inc wave-num)]
     (if (zero? wave-num)
-      (.fillText context "Press <n> to start" 640 200)
+      (.fillText context "Press <n> to start" 640 260)
       (do
-        (.fillText context (str "Current wave: " wave-num) 640 200)
-        (.fillText context (describe-wave wave-num) 660 220)
+        (.fillText context (str "Current wave: " wave-num) 640 260)
+        (.fillText context (describe-wave wave-num) 660 280)
         (if-let [timer (:time-since-last-wave spawner)]
           (let [time-remaining (ceil (- wave-time timer))]
             (.fillText context
                        (str "Next wave in " time-remaining " seconds")
-                       640 240)
-            (.fillText context (describe-wave next-wave) 660 260)))))))
+                       640 300)
+            (.fillText context (describe-wave next-wave) 660 320)))))))
 
 (defn- draw-side-panel [state]
   (let [context (get-2d-context "game-canvas")]
@@ -315,14 +321,20 @@
     (.fillText context (str "Score: " (:score state)) 640 20)
     (.fillText context (str "Money: $" (:money state)) 640 40)
     (.fillText context (str "Lives: " (:lives state)) 640 60)
+    ;; tower type selection buttons
+    (draw-tower-at context :pellet [640 80])
+    (draw-tower-at context :squirt [(+ 640 tower-size) 80])
+    (draw-tower-at context :dart [(+ 640 (* 2 tower-size)) 80])
+    (draw-tower-at context :swarm [(+ 640 (* 3 tower-size)) 80])
+    (draw-tower-at context :frost [(+ 640 (* 4 tower-size)) 80])
     (when-let [tower-to-build (:tower-to-build state)]
-      (.fillText context "Selected tower:" 640 80)
+      (.fillText context "Selected tower:" 640 140)
       (.fillText context
                  (str (name tower-to-build)
                       " ($"
                       (tower-build-cost tower-to-build)
                       ")")
-                 660 100))
+                 660 160))
     (draw-selected-tower context state)
     (draw-wave-info context state)
     (.fillText context (str "Frame: " (:frames-rendered state)) 640 450)))
