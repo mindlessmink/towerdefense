@@ -52,9 +52,7 @@
   (map (fn [x]
          [(+ (first tile) (first x))
           (+ (second tile) (second x))])
-       [[-1 -1] [0 -1] [1 -1]
-        [-1  0]        [1  0]
-        [-1  1] [0  1] [1  1]]))
+       [[-1 0] [1 0] [0 -1] [0 1]]))
 
 (defn- valid-neighbors [tile blockmap]
   (->> (find-neighbors tile)
