@@ -139,7 +139,7 @@
   (let [next-tile (get path-map start-tile)]
     (if (nil? next-tile)
       '()
-      (conj (find-path-on-map path-map next-tile) next-tile))))
+      (cons next-tile (lazy-seq (find-path-on-map path-map next-tile))))))
 
 (defn- make-path-maps [state]
   (let [targets (find-targets state)
