@@ -39,5 +39,6 @@
     (.requestAnimationFrame js/window (frame-callback (make-initial-state)
                                                       timestamp)))
 
-(init-input)
-(.requestAnimationFrame js/window start-game)
+(defn init []
+  (init-input)
+  (.requestAnimationFrame js/window start-game))
