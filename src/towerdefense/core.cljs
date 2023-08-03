@@ -1,5 +1,6 @@
 (ns towerdefense.core
-  (:require (reagent.core :as r)
+  (:require ("react" :as react)
+            (reagent.core :as r)
             (reagent.dom :as rd)
             (towerdefense.projectile :refer [update-projectiles])
             (towerdefense.creep :refer [Creep
@@ -30,20 +31,22 @@
         (update-creeps tick-seconds)
         (update :frames-rendered inc))))
 
-(defn frame-callback [state old-timestamp]
+(defn frame-callback [canvas state old-timestamp]
   (fn [new-timestamp]
     (let [new-state (update-state state (- new-timestamp old-timestamp))]
-      (render-game new-state)
+      (render-game canvas new-state)
       (.requestAnimationFrame js/window
-                              (frame-callback new-state new-timestamp)))))
+                              (frame-callback canvas new-state new-timestamp)))))
 
-(defn start-game [timestamp]
-    (.requestAnimationFrame js/window (frame-callback (make-initial-state)
-                                                      timestamp)))
+(defn start-game [canvas]
+  (fn [timestamp]
+    (.requestAnimationFrame js/window (frame-callback canvas
+                                                      (make-initial-state)
+                                                      timestamp))))
 
-(defn- td-canvas []
+(defn td-canvas [canvas-ref]
   [:div
-   [:canvas {:id "game-canvas", :width 800, :height 480}]])
+   [:canvas {:id "game-canvas", :width 800, :height 480, :ref canvas-ref}]])
 
 (def all-scores (r/atom []))
 
@@ -53,7 +56,7 @@
   (let [num-scores (count @all-scores)]
     (swap! all-scores conj {:id (inc num-scores), :score score})))
 
-(defn- td-high-scores []
+(defn td-high-scores []
   (let [scores @all-scores
         top-ten (take 10 (sort-by :score > scores))]
     [:div
@@ -63,16 +66,19 @@
         ^{:key (:id entry)} [:li (:score entry)])]]))
 
 
-(defn- td-game []
-  [:div
-   [td-canvas]
-   [td-high-scores]
-   [:p "Tower Defense game, version 0.3"]])
+(defn td-game []
+  (let [canvas-ref (react/useRef nil)]
+    (react/useEffect (fn []
+                       (init-input (.-current canvas-ref))
+                       (.requestAnimationFrame js/window (start-game (.-current canvas-ref)))
+                       js/undefined))
+    [:div
+     [td-canvas canvas-ref]
+     [td-high-scores]
+     [:p "Tower Defense game, version 0.3"]]))
 
 (defn ^:dev/after-load start []
-  (rd/render [td-game] (.getElementById js/document "app"))
-  (init-input)
-  (.requestAnimationFrame js/window start-game))
+  (rd/render [:f> td-game] (.getElementById js/document "app")))
 
 (defn init []
   (start))

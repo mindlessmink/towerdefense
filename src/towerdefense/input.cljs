@@ -36,11 +36,10 @@
   (reset! mouse-clicked true))
 
 ;; Initialize event listeners etc
-(defn init-input []
-  (let [canvas (.getElementById js/document "game-canvas")]
-    (.addEventListener js/document "keydown" key-down-handler)
-    (.addEventListener canvas "mousemove" mouse-move-handler)
-    (.addEventListener canvas "mousedown" mouse-down-handler)))
+(defn init-input [canvas]
+  (.addEventListener js/document "keydown" key-down-handler)
+  (.addEventListener canvas "mousemove" mouse-move-handler)
+  (.addEventListener canvas "mousedown" mouse-down-handler))
 
 (defn- try-sell-tower [state]
   (let [selected-tower (:selected-tower state)]

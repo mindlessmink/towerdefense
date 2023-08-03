@@ -339,7 +339,7 @@
     (draw-wave-info context state)
     (.fillText context (str "Frame: " (:frames-rendered state)) 640 450)))
 
-(defn render-game [state]
+(defn render-game [canvas state]
   (let [game-canvas (.getElementById js/document "game-canvas")
         context (.getContext game-canvas "2d")
         scale-factor (calculate-scale-factor)]
