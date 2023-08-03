@@ -1,5 +1,7 @@
 (ns towerdefense.core
-  (:require (towerdefense.projectile :refer [update-projectiles])
+  (:require (reagent.core :as r)
+            (reagent.dom :as rd)
+            (towerdefense.projectile :refer [update-projectiles])
             (towerdefense.creep :refer [Creep
                                         make-creep
                                         update-creeps])
@@ -39,6 +41,38 @@
     (.requestAnimationFrame js/window (frame-callback (make-initial-state)
                                                       timestamp)))
 
-(defn init []
+(defn- td-canvas []
+  [:div
+   [:canvas {:id "game-canvas", :width 800, :height 480}]])
+
+(def all-scores (r/atom []))
+
+(defn record-score
+  "Add a new score to the score list"
+  [score]
+  (let [num-scores (count @all-scores)]
+    (swap! all-scores conj {:id (inc num-scores), :score score})))
+
+(defn- td-high-scores []
+  (let [scores @all-scores
+        top-ten (take 10 (sort-by :score > scores))]
+    [:div
+     [:p "Top 10 scores:"]
+     [:ul
+      (for [entry top-ten]
+        ^{:key (:id entry)} [:li (:score entry)])]]))
+
+
+(defn- td-game []
+  [:div
+   [td-canvas]
+   [td-high-scores]
+   [:p "Tower Defense game, version 0.3"]])
+
+(defn ^:dev/after-load start []
+  (rd/render [td-game] (.getElementById js/document "app"))
   (init-input)
   (.requestAnimationFrame js/window start-game))
+
+(defn init []
+  (start))
