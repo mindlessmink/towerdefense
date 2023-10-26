@@ -3,9 +3,11 @@
 (ns towerdefense.input
   (:require (cljs.math :refer [floor
                                round])
+            (towerdefense.common :refer [game-over?])
             (towerdefense.field :refer [make-blockmap
                                         maybe-update-path-maps
                                         tower-tiles])
+            (towerdefense.init :refer [restart-game])
             (towerdefense.render :refer [calculate-scale-factor
                                          tile-size
                                          tower-size])
@@ -139,6 +141,8 @@
     (reset! mouse-clicked false)
     (cond
       (not clicked?) state
+
+      (game-over? state) (restart-game state)
 
       ; side panel buttons
       (mouse-in-box? pos [640 80] [(+ 640 (* 5 tower-size)) (+ 80 tower-size)])

@@ -42,3 +42,6 @@
   (-> (init-spawners initial-state)
       add-walls
       (assoc :game-over-fn game-over-fn)))
+
+(defn restart-game [state]
+  (make-initial-state (:game-over-fn state)))

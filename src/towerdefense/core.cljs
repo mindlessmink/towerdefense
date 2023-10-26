@@ -27,9 +27,10 @@
   state)
 
 (defn update-state [state tick-time]
-  (if (game-over? state)
-    state
-    (let [tick-seconds (/ tick-time 1000)]
+  (let [tick-seconds (/ tick-time 1000)
+        state (process-inputs state)]
+    (if (game-over? state)
+      state
       (-> state
           process-inputs
           maybe-update-path-maps

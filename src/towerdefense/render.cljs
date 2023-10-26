@@ -349,9 +349,10 @@
     (set! (.-fillStyle context) "#ffffff")
     (set! (.-font context) "32px sans")
     (.fillText context
-               (str "Game over!\nFinal score: "
+               (str "Game over! Final score: "
                     (:score state))
-               100 200)))
+               100 200)
+    (.fillText context "Click anywhere to restart..." 100 240)))
 
 (defn render-game [canvas state]
   (let [game-canvas (.getElementById js/document "game-canvas")
