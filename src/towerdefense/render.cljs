@@ -2,6 +2,7 @@
   (:require (cljs.math :refer [PI
                                ceil
                                round])
+            (towerdefense.common :refer [game-over?])
             (towerdefense.creep :refer [Creep
                                         creep-color])
             (towerdefense.field :refer [Target
@@ -339,6 +340,19 @@
     (draw-wave-info context state)
     (.fillText context (str "Frame: " (:frames-rendered state)) 640 450)))
 
+(defn- draw-game-over-screen [state]
+  (let [context (get-2d-context "game-canvas")]
+    (set! (.-fillStyle context) "#000000")
+    (set! (.-globalAlpha context) "0.5")
+    (.fillRect context 0 0 640 480)
+    (set! (.-globalAlpha context) "1.0")
+    (set! (.-fillStyle context) "#ffffff")
+    (set! (.-font context) "32px sans")
+    (.fillText context
+               (str "Game over!\nFinal score: "
+                    (:score state))
+               100 200)))
+
 (defn render-game [canvas state]
   (let [game-canvas (.getElementById js/document "game-canvas")
         context (.getContext game-canvas "2d")
@@ -348,4 +362,6 @@
     (.resetTransform context)
     (.scale context scale-factor scale-factor))
   (draw-game-canvas state)
-  (draw-side-panel state))
+  (draw-side-panel state)
+  (if (game-over? state)
+    (draw-game-over-screen state)))

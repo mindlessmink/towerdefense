@@ -38,6 +38,7 @@
                               (not (contains? open-walls tile)))
                             tiles)))))
 
-(defn make-initial-state []
+(defn make-initial-state [game-over-fn]
   (-> (init-spawners initial-state)
-      add-walls))
+      add-walls
+      (assoc :game-over-fn game-over-fn)))
