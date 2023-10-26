@@ -85,7 +85,7 @@
     [:div
      [td-canvas canvas-ref]
      [td-high-scores]
-     [:p "Tower Defense game, version 0.3"]]))
+     [:p "Tower Defense game, version 0.4"]]))
 
 (defn ^:dev/after-load start []
   (rd/render [:f> td-game] (.getElementById js/document "app")))
